@@ -77,3 +77,5 @@ DSRegTool PowerShell is a comprehensive tool that performs more than 30 differen
 
     Shows logs collection steps 
     
+
+![Alt text](https://github.com/mzmaili/DSRegTool/blob/master/DSRegTool.png "DSRegTool")
