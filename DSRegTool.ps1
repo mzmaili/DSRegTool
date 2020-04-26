@@ -61,6 +61,7 @@ if (PSasAdmin){
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     exit
 }else{
     Write-Host "PowerShell is running with normal privileges" -ForegroundColor Green -BackgroundColor Black
@@ -83,6 +84,7 @@ if (PSasAdmin){
         ''
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+        ''
         exit
     }
 
@@ -128,6 +130,7 @@ if (PSasAdmin){
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                ''
             }else{
                 #PRT not available
                 Write-Host "Test failed: Azure AD PRT is not available. Hence SSO is not working and the device may be blocked if you have Conditional Access Policy requires the user to sign-in from trusted device" -ForegroundColor Red -BackgroundColor Black
@@ -137,6 +140,7 @@ if (PSasAdmin){
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                ''
             }
 
             exit
@@ -162,6 +166,7 @@ if (PSasAdmin){
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                ''
                 exit        
            }
         }
@@ -187,6 +192,7 @@ if (PSasAdmin){
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                ''
             }else{
                 #PRT not available
                 Write-Host "Test failed: Azure AD PRT is not available. Hence SSO with O365 services is not working and the device may be blocked if you have Conditional Access Policy requires the user to sign-in from trusted device" -ForegroundColor Red -BackgroundColor Black
@@ -195,6 +201,7 @@ if (PSasAdmin){
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                ''
             }
 
            exit
@@ -220,6 +227,7 @@ if (PSasAdmin){
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                ''
                 exit        
            }
         }
@@ -243,6 +251,7 @@ Function WPJTS{
         ''
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+        ''
         exit
     }
 
@@ -301,6 +310,7 @@ if ($WPJ -ne "YES"){
         ''
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+        ''
         exit                
     }
 
@@ -318,6 +328,7 @@ if ($WPJ -ne "YES"){
         ''
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+        ''
         exit                
     }
 
@@ -346,6 +357,8 @@ $DID = ($DID.ToString() -split ":")[1].Trim()
 $AADDevice = Get-MsolDevice -DeviceId $DID -ErrorAction 'silentlycontinue'
         
 #Check if the device exist:
+''
+Write-Host "Checking if device exist in AAD..." -ForegroundColor Yellow
 if ($AADDevice.count -ge 1){
     #The device existing in AAD:
     Write-Host "Test passed: the device object exists on Azure AD." -ForegroundColor Green -BackgroundColor Black
@@ -358,10 +371,13 @@ if ($AADDevice.count -ge 1){
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     exit
 }
 
 #Check if the device is enabled:
+''
+Write-Host "Checking if device enabled on AAD..." -ForegroundColor Yellow
 if ($AADDevice.Enabled -eq $false){
     ###Enabling device in AAD
     Write-Host "Test failed: the device is not enabled on Azure AD tenant." -ForegroundColor Red -BackgroundColor Black
@@ -370,6 +386,7 @@ if ($AADDevice.Enabled -eq $false){
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     exit
 }else{
     Write-Host "Test passed: the device is enabled on Azure AD tenant." -ForegroundColor Green -BackgroundColor Black
@@ -382,6 +399,7 @@ Write-Host "The device is connected to AAD as Azure AD Registered device, and it
 ''
 ''
 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+''
     
 }#end WPJTS
 
@@ -399,6 +417,7 @@ if (PSasAdmin){
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     exit
 
 }
@@ -418,6 +437,7 @@ if (($OSVersoin -ge 10) -and ($OSBuild -ge 1511)){
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     exit
 }
 
@@ -443,6 +463,7 @@ if ($DJ -ne "YES"){
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     exit
 }    
 
@@ -468,6 +489,7 @@ if ($AADJ -ne "YES"){
         ''
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+        ''
         exit        
     }else{
         Write-Host "Test passed: you are not signed in using the built-in Administrator account" -ForegroundColor Green -BackgroundColor Black
@@ -486,6 +508,7 @@ if ($AADJ -ne "YES"){
         ''
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+        ''
         exit        
 
     }
@@ -532,6 +555,7 @@ if ($AADJ -ne "YES"){
         ''
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+        ''
         exit                
     }
 
@@ -549,6 +573,7 @@ if ($AADJ -ne "YES"){
         ''
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+        ''
         exit                
     }
 
@@ -577,6 +602,8 @@ $DID = ($DID.ToString() -split ":")[1].Trim()
 $AADDevice = Get-MsolDevice -DeviceId $DID -ErrorAction 'silentlycontinue'
         
 #Check if the device exist:
+''
+Write-Host "Checking if device exist in AAD..." -ForegroundColor Yellow
 if ($AADDevice.count -ge 1){
     #The device existing in AAD:
     Write-Host "Test passed: the device object exists on Azure AD." -ForegroundColor Green -BackgroundColor Black
@@ -589,10 +616,13 @@ if ($AADDevice.count -ge 1){
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     exit
 }
 
 #Check if the device is enabled:
+''
+Write-Host "Checking if device enabled on AAD..." -ForegroundColor Yellow
 if ($AADDevice.Enabled -eq $false){
     ###Enabling device in AAD
     Write-Host "Test failed: the device is not enabled on Azure AD tenant." -ForegroundColor Red -BackgroundColor Black
@@ -601,6 +631,7 @@ if ($AADDevice.Enabled -eq $false){
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     exit
 }else{
         Write-Host "Test passed: the device is enabled on Azure AD tenant." -ForegroundColor Green -BackgroundColor Black
@@ -613,6 +644,7 @@ Write-Host "The device is connected to AAD as Azure AD joined device, and it is 
 ''
 ''
 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+''
     
 #end AADJ
 }
@@ -664,6 +696,7 @@ Function VerifySCP{
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                ''
                 exit
             }
 
@@ -675,6 +708,7 @@ Function VerifySCP{
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
         }
 
@@ -694,6 +728,7 @@ Function VerifySCP{
         ''
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+        ''
         exit        
     }else{
         Write-Host "Test passed: connection to Domain Controller succeeded" -ForegroundColor Green -BackgroundColor Black
@@ -752,6 +787,7 @@ Function VerifySCP{
                     ''
                     ''
                     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                    ''
                     exit
                 }
             }else{
@@ -761,6 +797,7 @@ Function VerifySCP{
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                ''
                 exit
             }
 
@@ -771,6 +808,7 @@ Function VerifySCP{
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
 
         }
@@ -914,6 +952,7 @@ Function CheckCert ([String] $DeviceID, [String] $DeviceThumbprint){
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
             
         }
@@ -929,6 +968,7 @@ Function CheckCert ([String] $DeviceID, [String] $DeviceThumbprint){
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
 
         }else{
@@ -945,6 +985,7 @@ Function CheckCert ([String] $DeviceID, [String] $DeviceThumbprint){
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
 
         }else{
@@ -960,6 +1001,7 @@ Function CheckCert ([String] $DeviceID, [String] $DeviceThumbprint){
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
 
         }else{
@@ -975,6 +1017,7 @@ Function CheckCert ([String] $DeviceID, [String] $DeviceThumbprint){
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
 
         }else{
@@ -990,6 +1033,7 @@ Function CheckCert ([String] $DeviceID, [String] $DeviceThumbprint){
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
 
         }else{
@@ -1007,6 +1051,7 @@ Function CheckCert ([String] $DeviceID, [String] $DeviceThumbprint){
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     exit
 
     }
@@ -1046,6 +1091,7 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
             
         }
@@ -1061,6 +1107,7 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
 
         }else{
@@ -1077,6 +1124,7 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
 
         }else{
@@ -1092,6 +1140,7 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
 
         }else{
@@ -1107,6 +1156,7 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
 
         }else{
@@ -1122,6 +1172,7 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
 
         }else{
@@ -1139,6 +1190,7 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     exit
 
     }
@@ -1166,6 +1218,7 @@ Function NewFun{
                     ''
                     ''
                     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                    ''
                     exit
 
                 }else{
@@ -1196,10 +1249,14 @@ Function NewFun{
         $AADDevice = Get-MsolDevice -DeviceId $DID -ErrorAction 'silentlycontinue'
         
         #Check if the device exist:
+        ''
+        Write-Host "Checking if device exists on AAD..." -ForegroundColor Yellow
         if ($AADDevice.count -ge 1){
             #The device existing in AAD:
-            Write-Host "The device object exist on Azure AD." -ForegroundColor Green
+            Write-Host "The device object exists on Azure AD." -ForegroundColor Green
             #Check if the device is enabled:
+            ''
+            Write-Host "Checking if device enabled on AAD..." -ForegroundColor Yellow
                 if ($AADDevice.Enabled -eq $false){
                     Write-Host "The device is not enabled on Azure AD tenant." -ForegroundColor Red
                     ''
@@ -1207,6 +1264,7 @@ Function NewFun{
                     ''
                     ''
                     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                    ''
                     exit
 
             }else{
@@ -1214,6 +1272,8 @@ Function NewFun{
             }
 
             #Check if the device is registered (not Pending):
+            ''
+            Write-Host "Checking device PENDING state..." -ForegroundColor Yellow
             [string]$AltSec=$AADDevice.AlternativeSecurityIds
             if (-not ($AltSec.StartsWith("X509:"))){
                 Write-Host "Test failed: the device in 'Pending' state on Azure AD." -ForegroundColor Red
@@ -1225,10 +1285,11 @@ Function NewFun{
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                ''
                 exit
 
             }else{
-                    Write-Host "The device is not in PENDING status." -ForegroundColor Green
+                    Write-Host "The device is not in PENDING state." -ForegroundColor Green
             }
 
 
@@ -1244,6 +1305,7 @@ Function NewFun{
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
 
         }
@@ -1259,9 +1321,22 @@ Function NewFun{
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
         }else{
-            Write-Host "The device is not in dual state." -ForegroundColor Green
+            #Check if there is atoken inside the path HKCU:\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\https://login.microsoftonline.com
+            if ((Get-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\https://login.microsoftonline.com -ErrorAction SilentlyContinue).PSPath){
+                Write-Host "The device in dual state." -ForegroundColor Red
+                ''
+                Write-Host "Recommended action: remove the regostry key 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\'" -ForegroundColor Yellow
+                ''
+                ''
+                Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                ''
+                exit                
+            }else{
+                Write-Host "The device is not in dual state." -ForegroundColor Green
+            }
         }
 
 
@@ -1272,6 +1347,7 @@ Function NewFun{
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
             
 }
 
@@ -1295,6 +1371,7 @@ Function NewFunAAD{
                     ''
                     ''
                     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                    ''
                     exit
 
                 }else{
@@ -1325,10 +1402,15 @@ Function NewFunAAD{
         $AADDevice = Get-MsolDevice -DeviceId $DID -ErrorAction 'silentlycontinue'
         
         #Check if the device exist:
+        ''
+        Write-Host "Checking if device exists on AAD..." -ForegroundColor Yellow
         if ($AADDevice.count -ge 1){
             #The device existing in AAD:
-            Write-Host "The device object exist on Azure AD." -ForegroundColor Green
+            ''
+            Write-Host "Checking if device exists on AAD..." -ForegroundColor Yellow
             #Check if the device is enabled:
+            ''
+            Write-Host "Checking if device enabled on AAD..." -ForegroundColor Yellow
                 if ($AADDevice.Enabled -eq $false){
                     Write-Host "The device is not enabled on Azure AD tenant." -ForegroundColor Red
                     ''
@@ -1336,6 +1418,7 @@ Function NewFunAAD{
                     ''
                     ''
                     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                    ''
                     exit
 
             }else{
@@ -1355,6 +1438,7 @@ Function NewFunAAD{
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
 
 
@@ -1366,6 +1450,7 @@ Function NewFunAAD{
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
             
 }
 
@@ -1401,10 +1486,14 @@ Function NewFunWPJ{
         $AADDevice = Get-MsolDevice -DeviceId $DID -ErrorAction 'silentlycontinue'
         
         #Check if the device exist:
+        ''
+        Write-Host "Checking if device exists on AAD..." -ForegroundColor Yellow
         if ($AADDevice.count -ge 1){
             #The device existing in AAD:
             Write-Host "The device object exist on Azure AD." -ForegroundColor Green
             #Check if the device is enabled:
+            ''
+            Write-Host "Checking if device enabled on AAD..." -ForegroundColor Yellow
                 if ($AADDevice.Enabled -eq $false){
                     Write-Host "The device is not enabled on Azure AD tenant." -ForegroundColor Red
                     ''
@@ -1412,6 +1501,7 @@ Function NewFunWPJ{
                     ''
                     ''
                     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                    ''
                     exit
 
             }else{
@@ -1431,6 +1521,7 @@ Function NewFunWPJ{
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
 
 
@@ -1442,6 +1533,7 @@ Function NewFunWPJ{
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
             
 }
 
@@ -1467,6 +1559,7 @@ Function DJ++1{
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
 
         }else{
@@ -1489,6 +1582,7 @@ Function DJ++1{
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
 
             }else{
@@ -1510,6 +1604,7 @@ Function DJ++1{
                     ''
                     ''
                     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                    ''
                     exit
 
                 }else{
@@ -1540,10 +1635,14 @@ Function DJ++1{
         $AADDevice = Get-MsolDevice -DeviceId $DID -ErrorAction 'silentlycontinue'
         
         #Check if the device exist:
+        ''
+        Write-Host "Checking if device exists on AAD..." -ForegroundColor Yellow
         if ($AADDevice.count -ge 1){
             #The device existing in AAD:
             Write-Host "The device object exist on Azure AD." -ForegroundColor Green
             #Check if the device is enabled:
+            ''
+            Write-Host "Checking if device enabled on AAD..." -ForegroundColor Yellow
                 if ($AADDevice.Enabled -eq $false){
                     Write-Host "The device is not enabled on Azure AD tenant." -ForegroundColor Red
                     ''
@@ -1551,6 +1650,7 @@ Function DJ++1{
                     ''
                     ''
                     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                    ''
                     exit
 
             }else{
@@ -1558,6 +1658,8 @@ Function DJ++1{
             }
 
             #Check if the device is registered (not Pending):
+            ''
+            Write-Host "Checking device PENDING state..." -ForegroundColor Yellow
             [string]$AltSec=$AADDevice.AlternativeSecurityIds
             if (-not ($AltSec.StartsWith("X509:"))){
                 Write-Host "Test failed: the device in 'Pending' state on Azure AD." -ForegroundColor Red
@@ -1569,10 +1671,11 @@ Function DJ++1{
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                ''
                 exit
 
             }else{
-                    Write-Host "The device is not in PENDING status." -ForegroundColor Green
+                    Write-Host "The device is not in PENDING state." -ForegroundColor Green
             }
 
 
@@ -1588,6 +1691,7 @@ Function DJ++1{
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
 
 
@@ -1606,6 +1710,7 @@ Function DJ++1{
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
 
          
@@ -1617,6 +1722,7 @@ Function DJ++1{
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     
 }
 
@@ -1656,6 +1762,7 @@ Function DJ++{
                             ''
                             ''
                             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                            ''
                             #exit
                         }else{
                             #The device is WPJ
@@ -1687,6 +1794,7 @@ Function DJ++{
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
 
             }else{
@@ -1704,6 +1812,7 @@ Function DJ++{
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
 
          
@@ -1728,6 +1837,7 @@ if (PSasAdmin){
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     exit
 
 }
@@ -1748,6 +1858,7 @@ if (($OSVersoin -ge 10) -and ($OSBuild -ge 1511)){
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     exit
 }
 
@@ -1767,6 +1878,7 @@ if ($DJ -ne "YES"){
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     exit
 
 }else{
@@ -1797,6 +1909,7 @@ if ($AADJ -ne "YES"){
         ''
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+        ''
         exit
     }else{
         Write-Host "Test passed: Automatic-Device-Join task scheduler is ready" -ForegroundColor Green -BackgroundColor Black
@@ -1817,6 +1930,7 @@ if ($AADJ -ne "YES"){
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit        
         }else{
             Write-Host "Test passed: connection to Domain Controller succeeded" -ForegroundColor Green -BackgroundColor Black
@@ -1863,10 +1977,12 @@ if ($AADJ -ne "YES"){
         Write-Host "Recommended actions: " -ForegroundColor Yellow
         Write-Host "- Make sure that the device is able to communicate with the above MS endpoints successfully under the system account." -ForegroundColor Yellow
         Write-Host "- If the organization requires access to the internet via an outbound proxy, it is recommended to implement Web Proxy Auto-Discovery (WPAD)." -ForegroundColor Yellow
+        Write-Host "- If you don't use WPAD, you can configure proxy settings with GPO by deploying WinHTTP Proxy Settings on your computers beginning with Windows 10 1709." -ForegroundColor Yellow
         Write-Host "- If the organization requires access to the internet via an authenticated outbound proxy, make sure that Windows 10 computers can successfully authenticate to the outbound proxy using the machine context." -ForegroundColor Yellow
         ''
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+        ''
         exit                
     }
 
@@ -1897,6 +2013,7 @@ if ($AADJ -ne "YES"){
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
         }
 
@@ -1921,6 +2038,7 @@ if ($AADJ -ne "YES"){
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             exit
 
         }else{
@@ -1940,6 +2058,7 @@ if ($AADJ -ne "YES"){
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                ''
                 exit          
             }
             }
@@ -1972,12 +2091,14 @@ if ($AADJ -ne "YES"){
         ''
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+        ''
         exit                
     }
 
     ''
     ''
     Write-Host "Script completed successfully. You can start hybrid Azure AD registration process." -ForegroundColor Green -BackgroundColor Black
+    ''
     exit
 
 }else{
@@ -2000,6 +2121,8 @@ $DID = ($DID.ToString() -split ":")[1].Trim()
 $AADDevice = Get-MsolDevice -DeviceId $DID -ErrorAction 'silentlycontinue'
         
 #Check if the device exist:
+''
+Write-Host "Checking if device exists on AAD..." -ForegroundColor Yellow
 if ($AADDevice.count -ge 1){
     #The device existing in AAD:
     Write-Host "Test passed: the device object exists on Azure AD." -ForegroundColor Green -BackgroundColor Black
@@ -2012,10 +2135,13 @@ if ($AADDevice.count -ge 1){
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     exit
 }
 
 #Check if the device is enabled:
+''
+Write-Host "Checking if device enabled on AAD..." -ForegroundColor Yellow
 if ($AADDevice.Enabled -eq $false){
     ###Enabling device in AAD
     Write-Host "Test failed: the device is not enabled on Azure AD tenant." -ForegroundColor Red -BackgroundColor Black
@@ -2024,12 +2150,15 @@ if ($AADDevice.Enabled -eq $false){
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     exit
 }else{
         Write-Host "Test passed: the device is enabled on Azure AD tenant." -ForegroundColor Green -BackgroundColor Black
 }
 
 #Check if the device is registered (not Pending):
+''
+Write-Host "Checking device PENDING state..." -ForegroundColor Yellow
 [string]$AltSec=$AADDevice.AlternativeSecurityIds
 if (-not ($AltSec.StartsWith("X509:"))){
     ###Perform DJ++
@@ -2042,11 +2171,43 @@ if (-not ($AltSec.StartsWith("X509:"))){
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     exit
 
 }else{
         Write-Host "Test passed: the device is not in PENDING state." -ForegroundColor Green -BackgroundColor Black
 }
+
+
+        ''
+        Write-Host "Checking dual state..." -ForegroundColor Yellow
+        $WPJ = $DSReg | Select-String WorkplaceJoined
+        $WPJ = ($WPJ.tostring() -split ":")[1].trim()
+        if ($WPJ -eq "YES"){
+            Write-Host "The device in dual state." -ForegroundColor Red
+            ''
+            Write-Host "Recommended action: upgrade your OS to Windows 10 1803 (with KB4489894 applied). In pre-1803 releases, you will need to remove the Azure AD registered state manually before enabling Hybrid Azure AD join by disconnecting the user from Access Work or School Account." -ForegroundColor Yellow
+            ''
+            ''
+            Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
+            exit
+        }else{
+            #Check if there is atoken inside the path HKCU:\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\https://login.microsoftonline.com
+            if ((Get-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\https://login.microsoftonline.com -ErrorAction SilentlyContinue).PSPath){
+                Write-Host "The device in dual state." -ForegroundColor Red
+                ''
+                Write-Host "Recommended action: remove the regostry key 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\'" -ForegroundColor Yellow
+                ''
+                ''
+                Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                ''
+                exit                
+            }else{
+                Write-Host "Test passed: the device is not in dual state." -ForegroundColor Green -BackgroundColor Black
+            }
+        }
+
 
 
 ''
@@ -2055,6 +2216,7 @@ Write-Host "The device is connected to AAD as hybrid Azure AD joined device, and
 ''
 ''
 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+''
     
 }
 $global:DomainAuthType=""
