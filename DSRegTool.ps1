@@ -1905,7 +1905,7 @@ if ($AADJ -ne "YES"){
     if ($TaskState -ne 'Ready'){
         Write-Host $hostname "Test failed: Automatic-Device-Join task scheduler is not ready" -ForegroundColor Red -BackgroundColor Black
         ''
-        Write-Host "Recommended action: You need to join the device to the local domain in order to perform hybrid Azure AD join." -ForegroundColor Yellow
+        Write-Host "Recommended action: please enable 'Automatic-Device-Join' task from 'Task Scheduler Library\Microsoft\Windows\Workplace Join'." -ForegroundColor Yellow
         ''
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
