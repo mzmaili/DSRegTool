@@ -6,12 +6,12 @@ DSRegTool PowerShell is a comprehensive tool that performs more than 30 differen
  
 1- Troubleshoot Azure AD Register
 
-    Testing OS version
-    Testing if the device is registered to AzureAD by the signed in user
-    Testing Internet Connectivity
-    Testing Device Registration Service
-    Testing if the device exist on AAD
-    Testing if the device is enabled on AAD 
+- Testing OS version
+- Testing if the device is registered to AzureAD by the signed in user
+- Testing Internet Connectivity
+- Testing Device Registration Service
+- Testing if the device exist on AAD
+- Testing if the device is enabled on AAD 
 
 2- Troubleshoot Azure AD Join device
 
