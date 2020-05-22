@@ -103,3 +103,4 @@ DSRegTool PowerShell is a comprehensive tool that performs more than 30 differen
     Enter (7) to collect the logs 
  
     Enter (Q) to Quit 
+```
