@@ -1,7 +1,7 @@
 ﻿<# 
  
 .SYNOPSIS
-    DSRegTool PowerShell script.
+    DSRegTool V2 PowerShell script.
 
 .DESCRIPTION
     Device Registration Troubleshooter Tool is a PowerShell script that troubleshhot device registration common issues.
@@ -62,6 +62,7 @@ if (PSasAdmin){
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
     ''
+    ''
     exit
 }else{
     Write-Host "PowerShell is running with normal privileges" -ForegroundColor Green -BackgroundColor Black
@@ -84,6 +85,7 @@ if (PSasAdmin){
         ''
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+        ''
         ''
         exit
     }
@@ -131,6 +133,7 @@ if (PSasAdmin){
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
                 ''
+                ''
             }else{
                 #PRT not available
                 Write-Host "Test failed: Azure AD PRT is not available. Hence SSO is not working and the device may be blocked if you have Conditional Access Policy requires the user to sign-in from trusted device" -ForegroundColor Red -BackgroundColor Black
@@ -140,6 +143,7 @@ if (PSasAdmin){
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                ''
                 ''
             }
 
@@ -167,6 +171,7 @@ if (PSasAdmin){
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
                 ''
+                ''
                 exit        
            }
         }
@@ -193,6 +198,7 @@ if (PSasAdmin){
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
                 ''
+                ''
             }else{
                 #PRT not available
                 Write-Host "Test failed: Azure AD PRT is not available. Hence SSO with O365 services is not working and the device may be blocked if you have Conditional Access Policy requires the user to sign-in from trusted device" -ForegroundColor Red -BackgroundColor Black
@@ -201,6 +207,7 @@ if (PSasAdmin){
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                ''
                 ''
             }
 
@@ -228,10 +235,36 @@ if (PSasAdmin){
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
                 ''
+                ''
                 exit        
            }
         }
     }
+}
+
+Function checkProxy{
+# Check Proxy settings
+Write-Host "Checking winHTTP proxy settings..." -ForegroundColor Yellow
+$ProxyServer="NoProxy"
+$winHTTP = netsh winhttp show proxy
+$Proxy = $winHTTP | Select-String server
+$ProxyServer=$Proxy.ToString().TrimStart("Proxy Server(s) :  ")
+$Bypass = $winHTTP | Select-String Bypass
+$Bypass=$Bypass.ToString().TrimStart("Bypass List     :  ")
+
+if ($ProxyServer -eq "Direct access (no proxy server)."){
+    $ProxyServer="NoProxy"
+    Write-Host "Access Type : DIRECT"
+}
+
+if ( ($ProxyServer -ne "NoProxy") -and (-not($ProxyServer.StartsWith("http://")))){
+    Write-Host "      Access Type : PROXY"
+    Write-Host "Proxy Server List :" $ProxyServer
+    Write-Host "Proxy Bypass List :" $Bypass
+    $ProxyServer = "http://" + $ProxyServer
+}
+
+return $ProxyServer
 }
 
 Function WPJTS{
@@ -251,6 +284,7 @@ Function WPJTS{
         ''
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+        ''
         ''
         exit
     }
@@ -311,6 +345,7 @@ if ($WPJ -ne "YES"){
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
         ''
+        ''
         exit                
     }
 
@@ -329,12 +364,15 @@ if ($WPJ -ne "YES"){
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
         ''
+        ''
         exit                
     }
 
     ''
     ''
     Write-Host "All tests completed successfully. You can start registering your device to Azure AD." -ForegroundColor Green -BackgroundColor Black
+    ''
+    ''
     exit
 
 }else{
@@ -372,6 +410,7 @@ if ($AADDevice.count -ge 1){
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
     ''
+    ''
     exit
 }
 
@@ -387,6 +426,7 @@ if ($AADDevice.Enabled -eq $false){
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
     ''
+    ''
     exit
 }else{
     Write-Host "Test passed: the device is enabled on Azure AD tenant." -ForegroundColor Green -BackgroundColor Black
@@ -399,6 +439,7 @@ Write-Host "The device is connected to AAD as Azure AD Registered device, and it
 ''
 ''
 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+''
 ''
     
 }#end WPJTS
@@ -417,6 +458,7 @@ if (PSasAdmin){
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     ''
     exit
 
@@ -437,6 +479,7 @@ if (($OSVersoin -ge 10) -and ($OSBuild -ge 1511)){
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     ''
     exit
 }
@@ -464,6 +507,7 @@ if ($DJ -ne "YES"){
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
     ''
+    ''
     exit
 }    
 
@@ -490,6 +534,7 @@ if ($AADJ -ne "YES"){
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
         ''
+        ''
         exit        
     }else{
         Write-Host "Test passed: you are not signed in using the built-in Administrator account" -ForegroundColor Green -BackgroundColor Black
@@ -508,6 +553,7 @@ if ($AADJ -ne "YES"){
         ''
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+        ''
         ''
         exit        
 
@@ -556,6 +602,7 @@ if ($AADJ -ne "YES"){
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
         ''
+        ''
         exit                
     }
 
@@ -574,12 +621,15 @@ if ($AADJ -ne "YES"){
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
         ''
+        ''
         exit                
     }
 
     ''
     ''
     Write-Host "All tests completed successfully. You can start joining your device to Azure AD." -ForegroundColor Green -BackgroundColor Black
+    ''
+    ''
     exit
 
 }else{
@@ -612,10 +662,11 @@ if ($AADDevice.count -ge 1){
     ###Rejoin device to AAD
     Write-Host "Test failed: the device does not exist in your Azure AD tenant." -ForegroundColor Red -BackgroundColor Black
     ''
-    Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands to perform hybrid Azure AD join procedure again. If you have a Managed domain, make sure the device is in the sync scope." -ForegroundColor Yellow
+    Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again. If you have a Managed domain, make sure the device is in the sync scope." -ForegroundColor Yellow
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     ''
     exit
 }
@@ -632,6 +683,7 @@ if ($AADDevice.Enabled -eq $false){
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
     ''
+    ''
     exit
 }else{
         Write-Host "Test passed: the device is enabled on Azure AD tenant." -ForegroundColor Green -BackgroundColor Black
@@ -645,7 +697,7 @@ Write-Host "The device is connected to AAD as Azure AD joined device, and it is 
 ''
 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
 ''
-    
+''    
 #end AADJ
 }
 
@@ -661,6 +713,7 @@ Function VerifySCP{
         $SCPClient=$true
         Write-Host "Client-side registry setting for SCP is configured as the following:" -ForegroundColor Green -BackgroundColor Black
         Write-Host "TenantId:" $Reg.TenantId
+        $global:TenantName = $Reg.TenantName
         Write-Host "TenantName:" $Reg.TenantName
         #Check client-side SCP info
         ''
@@ -697,6 +750,7 @@ Function VerifySCP{
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
                 ''
+                ''
                 exit
             }
 
@@ -708,6 +762,7 @@ Function VerifySCP{
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             ''
             exit
         }
@@ -729,6 +784,7 @@ Function VerifySCP{
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
         ''
+        ''
         exit        
     }else{
         Write-Host "Test passed: connection to Domain Controller succeeded" -ForegroundColor Green -BackgroundColor Black
@@ -738,14 +794,14 @@ Function VerifySCP{
     #Check SCP
     if ($SCPClient -eq $false){
         ''
-        Write-Host "Testing Service Connection Point (SCP)..." -ForegroundColor Yellow
+        Write-Host "Checking Service Connection Point (SCP)..." -ForegroundColor Yellow
 
         $Root = [ADSI]"LDAP://RootDSE"
         $ConfigurationName = $Root.rootDomainNamingContext
         $scp = New-Object System.DirectoryServices.DirectoryEntry;
         $scp.Path = "LDAP://CN=62a0ff2e-97b9-4513-943f-0d221bd30080,CN=Device Registration Configuration,CN=Services,CN=Configuration," + $ConfigurationName;
         if ($scp.Keywords -ne $null){
-            Write-Host "Service Connection Point is configured (SCP) is configured as following:" -ForegroundColor Green -BackgroundColor Black
+            Write-Host "Service Connection Point (SCP) is configured as following:" -ForegroundColor Green -BackgroundColor Black
             $scp.Keywords
             #check SCP
             ''
@@ -755,7 +811,7 @@ Function VerifySCP{
 
             $TN = $scp.Keywords | Select-String azureADName
             $TN = ($TN.tostring() -split ":")[1].trim()
-
+            $global:TenantName = $TN
             CheckMSOnline
             Write-Host "Checking Tenant ID..." -ForegroundColor Yellow
             $TenantID=((Get-MsolAccountSku).accountobjectid).Guid | Select-Object -first 1
@@ -788,6 +844,7 @@ Function VerifySCP{
                     ''
                     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
                     ''
+                    ''
                     exit
                 }
             }else{
@@ -797,6 +854,7 @@ Function VerifySCP{
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                ''
                 ''
                 exit
             }
@@ -808,6 +866,7 @@ Function VerifySCP{
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             ''
             exit
 
@@ -837,7 +896,7 @@ Function LogsCollection{
 
 Function CheckInternet
 {
-$statuscode = (Invoke-WebRequest -Uri https://adminwebservice.microsoftonline.com/ProvisioningService.svc).statuscode
+$statuscode = (Invoke-WebRequest -Uri https://adminwebservice.microsoftonline.com/ProvisioningService.svc -UseBasicParsing).statuscode
 if ($statuscode -ne 200){
 ''
 ''
@@ -948,10 +1007,11 @@ Function CheckCert ([String] $DeviceID, [String] $DeviceThumbprint){
         }else{
             Write-Host "The certificate has expired." -ForegroundColor Red
             ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             ''
             exit
             
@@ -964,10 +1024,11 @@ Function CheckCert ([String] $DeviceID, [String] $DeviceThumbprint){
         if (($DeviceID -ne $CertDNSName.Punycode) -or ($DeviceID -ne $CertDNSName.Unicode)){
             Write-Host "The certificate subject is not correct." -ForegroundColor Red
             ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             ''
             exit
 
@@ -981,10 +1042,11 @@ Function CheckCert ([String] $DeviceID, [String] $DeviceThumbprint){
         if (($IssuerName.Name -ne "DC=net + DC=windows + CN=MS-Organization-Access + OU=82dbaca4-3e81-46ca-9c73-0950c1eaca97") -or ($Issuer -ne "DC=net + DC=windows + CN=MS-Organization-Access + OU=82dbaca4-3e81-46ca-9c73-0950c1eaca97")){
             Write-Host "Certificate Issuer is not configured correctly." -ForegroundColor Red
             ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             ''
             exit
 
@@ -997,10 +1059,11 @@ Function CheckCert ([String] $DeviceID, [String] $DeviceThumbprint){
         if ($Algorithm.FriendlyName -ne "sha256RSA"){
             Write-Host "Certificate Algorithm is not configured correctly." -ForegroundColor Red
             ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             ''
             exit
 
@@ -1013,10 +1076,11 @@ Function CheckCert ([String] $DeviceID, [String] $DeviceThumbprint){
         if ($Algorithm.Value -ne "1.2.840.113549.1.1.11"){
             Write-Host "Certificate Algorithm Value is not configured correctly." -ForegroundColor Red
             ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             ''
             exit
 
@@ -1029,10 +1093,11 @@ Function CheckCert ([String] $DeviceID, [String] $DeviceThumbprint){
         if ($HasPrivateKey -ne "True"){
             Write-Host "Certificate PrivateKey does not exist." -ForegroundColor Red
             ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             ''
             exit
 
@@ -1047,10 +1112,11 @@ Function CheckCert ([String] $DeviceID, [String] $DeviceThumbprint){
     #Certificate does not exist.
     Write-Host "Device certificate does not exist." -ForegroundColor Red
     ''
-    Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+    Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     ''
     exit
 
@@ -1087,10 +1153,11 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
         }else{
             Write-Host "The certificate has expired." -ForegroundColor Red
             ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             ''
             exit
             
@@ -1103,10 +1170,11 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
         if (($DeviceID -ne $CertDNSName.Punycode) -or ($DeviceID -ne $CertDNSName.Unicode)){
             Write-Host "The certificate subject is not correct." -ForegroundColor Red
             ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             ''
             exit
 
@@ -1120,10 +1188,11 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
         if (($IssuerName.Name -ne "DC=net + DC=windows + CN=MS-Organization-Access + OU=82dbaca4-3e81-46ca-9c73-0950c1eaca97") -or ($Issuer -ne "DC=net + DC=windows + CN=MS-Organization-Access + OU=82dbaca4-3e81-46ca-9c73-0950c1eaca97")){
             Write-Host "Certificate Issuer is not configured correctly." -ForegroundColor Red
             ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             ''
             exit
 
@@ -1136,10 +1205,11 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
         if ($Algorithm.FriendlyName -ne "sha256RSA"){
             Write-Host "Certificate Algorithm is not configured correctly." -ForegroundColor Red
             ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             ''
             exit
 
@@ -1152,10 +1222,11 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
         if ($Algorithm.Value -ne "1.2.840.113549.1.1.11"){
             Write-Host "Certificate Algorithm Value is not configured correctly." -ForegroundColor Red
             ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             ''
             exit
 
@@ -1168,10 +1239,11 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
         if ($HasPrivateKey -ne "True"){
             Write-Host "Certificate PrivateKey does not exist." -ForegroundColor Red
             ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             ''
             exit
 
@@ -1186,10 +1258,11 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
     #Certificate does not exist.
     Write-Host "Device certificate does not exist." -ForegroundColor Red
     ''
-    Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+    Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     ''
     exit
 
@@ -1214,10 +1287,11 @@ Function NewFun{
                 if (($KeyProvider -ne "Microsoft Platform Crypto Provider") -and ($KeyProvider -ne "Microsoft Software Key Storage Provider")){
                     Write-Host "The KeyProvider is not configured correctly." -ForegroundColor Red
                     ''
-                    Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+                    Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
                     ''
                     ''
                     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                    ''
                     ''
                     exit
 
@@ -1265,6 +1339,7 @@ Function NewFun{
                     ''
                     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
                     ''
+                    ''
                     exit
 
             }else{
@@ -1279,12 +1354,13 @@ Function NewFun{
                 Write-Host "Test failed: the device in 'Pending' state on Azure AD." -ForegroundColor Red
                 ''
                 Write-Host "Recommended actions: Device registration process will not trigger as the device feels itself as a registered device. To fix this issue, do the following:" -ForegroundColor Yellow
-                Write-Host "                     - Clear the device state by running the command 'dsregcmd /leave'. " -ForegroundColor Yellow
-                Write-Host "                     - Run 'dsregcmd /join' command to perform hybrid Azure AD join procedure and rerun the script." -ForegroundColor Yellow
+                Write-Host "                     - Clear the device state by running the command 'dsregcmd /leave' as admin. " -ForegroundColor Yellow
+                Write-Host "                     - Run 'dsregcmd /join' command as admin to perform hybrid Azure AD join procedure and rerun the script." -ForegroundColor Yellow
                 Write-Host "                       If the issue still persists, check the possible courses on the article: http://www.microsoft.com/aadjerrors" -ForegroundColor Yellow
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                ''
                 ''
                 exit
 
@@ -1301,10 +1377,11 @@ Function NewFun{
             #Device does not exist:
             Write-Host "The device does not exist in your Azure AD tenant." -ForegroundColor Red
             ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands to perform hybrid Azure AD join procedure again. If you have a Managed domain, make sure the device is in the sync scope." -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again. If you have a Managed domain, make sure the device is in the sync scope." -ForegroundColor Yellow
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             ''
             exit
 
@@ -1322,6 +1399,7 @@ Function NewFun{
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
             ''
+            ''
             exit
         }else{
             #Check if there is atoken inside the path HKCU:\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\https://login.microsoftonline.com
@@ -1332,6 +1410,7 @@ Function NewFun{
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                ''
                 ''
                 exit                
             }else{
@@ -1348,7 +1427,7 @@ Function NewFun{
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
     ''
-            
+    ''      
 }
 
 Function NewFunAAD{
@@ -1367,10 +1446,11 @@ Function NewFunAAD{
                 if (($KeyProvider -ne "Microsoft Platform Crypto Provider") -and ($KeyProvider -ne "Microsoft Software Key Storage Provider")){
                     Write-Host "The KeyProvider is not configured correctly." -ForegroundColor Red
                     ''
-                    Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+                    Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
                     ''
                     ''
                     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                    ''
                     ''
                     exit
 
@@ -1419,6 +1499,7 @@ Function NewFunAAD{
                     ''
                     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
                     ''
+                    ''
                     exit
 
             }else{
@@ -1439,6 +1520,7 @@ Function NewFunAAD{
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
             ''
+            ''
             exit
 
 
@@ -1451,7 +1533,7 @@ Function NewFunAAD{
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
     ''
-            
+    ''        
 }
 
 Function NewFunWPJ{
@@ -1502,6 +1584,7 @@ Function NewFunWPJ{
                     ''
                     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
                     ''
+                    ''
                     exit
 
             }else{
@@ -1522,6 +1605,7 @@ Function NewFunWPJ{
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
             ''
+            ''
             exit
 
 
@@ -1534,7 +1618,7 @@ Function NewFunWPJ{
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
     ''
-            
+    ''        
 }
 
 Function DJ++1{
@@ -1560,6 +1644,7 @@ Function DJ++1{
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
             ''
+            ''
             exit
 
         }else{
@@ -1578,10 +1663,11 @@ Function DJ++1{
             #The device is not connected to AAD:
             Write-Host $hostname "device is NOT connected to Azure AD" -ForegroundColor Red
             ''
-            Write-Host "Recommended action: Run 'dsregcmd /join' command to perform hybrid Azure AD join procedure and re-run the script again, if the issue still persists, check the possible courses on the article: http://www.microsoft.com/aadjerrors" -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /join' command as admin to perform hybrid Azure AD join procedure and re-run the script again, if the issue still persists, check the possible courses on the article: http://www.microsoft.com/aadjerrors" -ForegroundColor Yellow
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             ''
             exit
 
@@ -1600,10 +1686,11 @@ Function DJ++1{
                 if (($KeyProvider -ne "Microsoft Platform Crypto Provider") -and ($KeyProvider -ne "Microsoft Software Key Storage Provider")){
                     Write-Host "The KeyProvider is not configured correctly." -ForegroundColor Red
                     ''
-                    Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+                    Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
                     ''
                     ''
                     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                    ''
                     ''
                     exit
 
@@ -1651,6 +1738,7 @@ Function DJ++1{
                     ''
                     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
                     ''
+                    ''
                     exit
 
             }else{
@@ -1665,12 +1753,13 @@ Function DJ++1{
                 Write-Host "Test failed: the device in 'Pending' state on Azure AD." -ForegroundColor Red
                 ''
                 Write-Host "Recommended actions: Device registration process will not trigger as the device feels itself as a registered device. To fix this issue, do the following:" -ForegroundColor Yellow
-                Write-Host "                     - Clear the device state by running the command 'dsregcmd /leave'. " -ForegroundColor Yellow
-                Write-Host "                     - Run 'dsregcmd /join' command to perform hybrid Azure AD join procedure and rerun the script." -ForegroundColor Yellow
+                Write-Host "                     - Clear the device state by running the command 'dsregcmd /leave' as admin. " -ForegroundColor Yellow
+                Write-Host "                     - Run 'dsregcmd /join' command as admin to perform hybrid Azure AD join procedure and rerun the script." -ForegroundColor Yellow
                 Write-Host "                       If the issue still persists, check the possible courses on the article: http://www.microsoft.com/aadjerrors" -ForegroundColor Yellow
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                ''
                 ''
                 exit
 
@@ -1687,10 +1776,11 @@ Function DJ++1{
             #Device does not exist:
             Write-Host "The device does not exist in your Azure AD tenant." -ForegroundColor Red
             ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands to perform hybrid Azure AD join procedure again. If you have a Managed domain, make sure the device is in the sync scope." -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again. If you have a Managed domain, make sure the device is in the sync scope." -ForegroundColor Yellow
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             ''
             exit
 
@@ -1711,6 +1801,7 @@ Function DJ++1{
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
             ''
+            ''
             exit
 
          
@@ -1723,7 +1814,7 @@ Function DJ++1{
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
     ''
-    
+    ''
 }
 
 Function DJ++{
@@ -1763,6 +1854,7 @@ Function DJ++{
                             ''
                             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
                             ''
+                            ''
                             #exit
                         }else{
                             #The device is WPJ
@@ -1790,10 +1882,11 @@ Function DJ++{
             #The device is not connected to AAD:
             Write-Host $hostname "device is NOT connected to Azure AD" -ForegroundColor Red
             ''
-            Write-Host "Recommended action: Run 'dsregcmd /join' command to perform hybrid Azure AD join procedure and re-run the script again, if the issue still persists, check the possible courses on the article: http://www.microsoft.com/aadjerrors" -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /join' command as admin to perform hybrid Azure AD join procedure. To troubleshoot hybrid device registration, re-run the tool and select option #3. If the issue still persists, check the possible courses on the article: http://www.microsoft.com/aadjerrors" -ForegroundColor Yellow
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             ''
             exit
 
@@ -1812,6 +1905,7 @@ Function DJ++{
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            ''
             ''
             exit
 
@@ -1838,6 +1932,7 @@ if (PSasAdmin){
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
     ''
+    ''
     exit
 
 }
@@ -1859,6 +1954,7 @@ if (($OSVersoin -ge 10) -and ($OSBuild -ge 1511)){
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
     ''
+    ''
     exit
 }
 
@@ -1878,6 +1974,7 @@ if ($DJ -ne "YES"){
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     ''
     exit
 
@@ -1910,6 +2007,7 @@ if ($AADJ -ne "YES"){
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
         ''
+        ''
         exit
     }else{
         Write-Host "Test passed: Automatic-Device-Join task scheduler is ready" -ForegroundColor Green -BackgroundColor Black
@@ -1931,47 +2029,80 @@ if ($AADJ -ne "YES"){
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
             ''
+            ''
             exit        
         }else{
             Write-Host "Test passed: connection to Domain Controller succeeded" -ForegroundColor Green -BackgroundColor Black
         }
     }
 
-    #Checking Internet connectivity
+    #Checking Internet connectivity###
     ''
     Write-Host "Testing Internet Connectivity..." -ForegroundColor Yellow
-    $InternetConn1=$true
-    $InternetConn2=$true
-    $InternetConn3=$true
-    $TestResult = RunPScript -PSScript "(Test-NetConnection -ComputerName login.microsoftonline.com -Port 443).TcpTestSucceeded"
-    if ($TestResult -eq $true){
-        Write-Host "Connection to login.microsoftonline.com .............. Succeeded." -ForegroundColor Green
+    ###conn
+    $ErrorActionPreference= 'silentlycontinue'
+    $TestFailed=$false
+
+    $ProxyServer = checkProxy
+    ''
+    Write-Host "Testing Device Registration Endpoints..." -ForegroundColor Yellow
+    if ($ProxyServer -eq "NoProxy"){
+        $PSScript = "(Invoke-WebRequest -uri 'login.microsoftonline.com' -UseBasicParsing).StatusCode"
+        $TestResult = RunPScript -PSScript $PSScript
+        if ($TestResult -eq 200){
+            Write-Host "Connection to login.microsoftonline.com .............. Succeeded." -ForegroundColor Green 
+        }else{
+            $TestFailed=$true
+            Write-Host "Connection to login.microsoftonline.com ................. failed." -ForegroundColor Red 
+        }
+        $PSScript = "(Invoke-WebRequest -uri 'device.login.microsoftonline.com' -UseBasicParsing).StatusCode"
+        $TestResult = RunPScript -PSScript $PSScript
+        if ($TestResult -eq 200){
+            Write-Host "Connection to device.login.microsoftonline.com ......  Succeeded." -ForegroundColor Green 
+        }else{
+            $TestFailed=$true
+            Write-Host "Connection to device.login.microsoftonline.com .......... failed." -ForegroundColor Red 
+        }
+
+        $PSScript = "(Invoke-WebRequest -uri 'https://enterpriseregistration.windows.net/$global:TenantName/discover?api-version=1.7' -UseBasicParsing -Headers @{'Accept' = 'application/json'; 'ocp-adrs-client-name' = 'dsreg'; 'ocp-adrs-client-version' = '10'}).StatusCode"
+        $TestResult = RunPScript -PSScript $PSScript
+        if ($TestResult -eq 200){
+            Write-Host "Connection to enterpriseregistration.windows.net ..... Succeeded." -ForegroundColor Green 
+        }else{
+            $TestFailed=$true
+            Write-Host "Connection to enterpriseregistration.windows.net ........ failed." -ForegroundColor Red 
+        }
     }else{
-        Write-Host "Connection to login.microsoftonline.com ................. failed." -ForegroundColor Red 
-        $InternetConn1=$false
+        $PSScript = "(Invoke-WebRequest -uri 'login.microsoftonline.com' -UseBasicParsing -Proxy $ProxyServer).StatusCode"
+        $TestResult = RunPScript -PSScript $PSScript
+        if ($TestResult -eq 200){
+            Write-Host "Connection to login.microsoftonline.com .............. Succeeded." -ForegroundColor Green 
+        }else{
+            $TestFailed=$true
+            Write-Host "Connection to login.microsoftonline.com ................. failed." -ForegroundColor Red 
+        }
+        $PSScript = "(Invoke-WebRequest -uri 'device.login.microsoftonline.com' -UseBasicParsing -Proxy $ProxyServer).StatusCode"
+        $TestResult = RunPScript -PSScript $PSScript
+        if ($TestResult -eq 200){
+            Write-Host "Connection to device.login.microsoftonline.com ......  Succeeded." -ForegroundColor Green 
+        }else{
+            $TestFailed=$true
+            Write-Host "Connection to device.login.microsoftonline.com .......... failed." -ForegroundColor Red 
+        }
+        $PSScript = "(Invoke-WebRequest -uri 'https://enterpriseregistration.windows.net/$global:TenantName/discover?api-version=1.7' -UseBasicParsing -Proxy $ProxyServer -Headers @{'Accept' = 'application/json'; 'ocp-adrs-client-name' = 'dsreg'; 'ocp-adrs-client-version' = '10'}).StatusCode"
+        $TestResult = RunPScript -PSScript $PSScript
+        if ($TestResult -eq 200){
+            Write-Host "Connection to enterpriseregistration.windows.net ..... Succeeded." -ForegroundColor Green 
+        }else{
+            $TestFailed=$true
+            Write-Host "Connection to enterpriseregistration.windows.net ........ failed." -ForegroundColor Red 
+        }
     }
 
-    
-    $TestResult = RunPScript -PSScript "(Test-NetConnection -ComputerName device.login.microsoftonline.com -Port 443).TcpTestSucceeded"
-    if ($TestResult -eq $true){
-        Write-Host "Connection to device.login.microsoftonline.com ......  Succeeded." -ForegroundColor Green 
-    }else{
-        Write-Host "Connection to device.login.microsoftonline.com .......... failed." -ForegroundColor Red 
-        $InternetConn2=$false
-    }
-
-
-    $TestResult = RunPScript -PSScript "(Test-NetConnection -ComputerName enterpriseregistration.windows.net -Port 443).TcpTestSucceeded"
-    if ($TestResult -eq $true){
-        Write-Host "Connection to enterpriseregistration.windows.net ..... Succeeded." -ForegroundColor Green 
-    }else{
-        Write-Host "Connection to enterpriseregistration.windows.net ........ failed." -ForegroundColor Red 
-        $InternetConn3=$false
-    }
-
-    if (($InternetConn1 -eq $true) -or ($InternetConn2 -eq $true) -or ($InternetConn3 -eq $true) ){
-        Write-Host "Test passed: device is able to communicate with MS endpoints under system account successfully" -ForegroundColor Green -BackgroundColor Black
-    }else{
+    # If test failed
+    if ($TestFailed){
+        ''
+        ''
         Write-Host "Test failed: device is not able to communicate with MS endpoints under system account" -ForegroundColor red -BackgroundColor Black
         ''
         Write-Host "Recommended actions: " -ForegroundColor Yellow
@@ -1983,15 +2114,36 @@ if ($AADJ -ne "YES"){
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
         ''
-        exit                
+        ''
+        exit
     }
 
+    ###conn
 
     #Testing if the device synced (with managed domain)
     ''
     Write-Host "Checking domain authenication type..." -ForegroundColor Yellow
+    #Check if URL status code is 200
+    #check through proxy if exist
+    #run under sys account
+    $UserRelmURL = "https://login.microsoftonline.com/common/UserRealm/?user=$global:TenantName&api-version=1.0"
+    if ($ProxyServer -eq "NoProxy"){
+        #$UserRealmJson= Invoke-WebRequest -uri $UserRelmURL -UseBasicParsing
+        $PSScript = "Invoke-WebRequest -uri '$UserRelmURL' -UseBasicParsing"
+        $UserRealmJson = RunPScript -PSScript $PSScript
+     }else{
+        #$UserRealmJson= Invoke-WebRequest -uri $UserRelmURL -UseBasicParsing -Proxy $ProxyServer
+
+        $PSScript = "Invoke-WebRequest -uri '$UserRelmURL' -UseBasicParsing -Proxy $ProxyServer"
+        $UserRealmJson = RunPScript -PSScript $PSScript
+     }
+    
+    
+    $UserRealm = $UserRealmJson.Content | ConvertFrom-Json
+    $global:UserRealmMEX = $UserRealm.federation_metadata_url
+    $global:FedProtocol = $UserRealm.federation_protocol
     #Check if the domain is Managed
-    if ($global:DomainAuthType -eq "Managed"){
+    if ($UserRealm.account_type -eq "Managed"){
         #The domain is Managed
         Write-Host "The configured domain is Managed" -ForegroundColor Green -BackgroundColor Black
 
@@ -2014,71 +2166,85 @@ if ($AADJ -ne "YES"){
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
             ''
+            ''
             exit
         }
 
     }else{
     #The domain is federated
     Write-Host "The configured domain is Federated" -ForegroundColor Green -BackgroundColor Black
-    
+    #Testing Federation protocol
+    ''
+    Write-Host "Tesing WSTrust Protocol..." -ForegroundColor Yellow
+    if ($global:FedProtocol -ne "WSTrust"){
+        #Not WSTrust
+        Write-Host "Test failed: WFTrust protocol is not enabled on federation service configuration." -ForegroundColor Red -BackgroundColor Black
+        ''
+        Write-Host "Recommended action: Make sure that your federation service supports WSTrust protocol, and WSTrust is enabled on AAD federated domain configuration." -ForegroundColor Yellow
+        Write-Host "Important Note: if your windows 10 version is 1803 or above, device registration will fall back to sync join." -ForegroundColor Yellow
+        ''
+        ''
+        Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+        ''
+        ''
+        exit
+    }else{
+        #WSTrust enabled
+        Write-Host "Test passed: WSTrust protocol is enabled on federation service configuration." -ForegroundColor Green -BackgroundColor Black
+    }
+
+
     #Testing MEX URL
     ''
     Write-Host "Tesing Metadata Exchange URI (MEX) URL..." -ForegroundColor Yellow
-    if ($global:MEXURLRun){
-        #User signed in is GA, and retreived MEX URL
-        $ErrorActionPreference = "SilentlyContinue"
-        $WebResponse=""
-        $WebResponse = Invoke-WebRequest $global:MEXURL
+    $ErrorActionPreference = "SilentlyContinue"
+    $WebResponse=""
+    if ($ProxyServer -eq "NoProxy"){
 
-        if ((($WebResponse.Content).count) -eq 0 ){
-            #Not accessible
-            Write-Host "Test failed: MEX URL is not accessible." -ForegroundColor Red -BackgroundColor Black
+        $PSScript = "Invoke-WebRequest -uri $global:UserRealmMEX -UseBasicParsing"
+        $WebResponse = RunPScript -PSScript $PSScript
+    }else{
+        $PSScript = "Invoke-WebRequest -uri $global:UserRealmMEX -UseBasicParsing -Proxy $ProxyServer"
+        $WebResponse = RunPScript -PSScript $PSScript
+    }
+
+    if ((($WebResponse.Content).count) -eq 0 ){
+        #Not accessible
+        Write-Host "Test failed: MEX URL is not accessible." -ForegroundColor Red -BackgroundColor Black
+        ''
+        Write-Host "Recommended action: Make sure the MEX URL $global:UserRealmMEX is accessible." -ForegroundColor Yellow
+        Write-Host "Important Note: if your windows 10 version is 1803 or above, device registration will fall back to sync join." -ForegroundColor Yellow
+        ''
+        ''
+        Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+        ''
+        ''
+        exit
+
+    }else{
+        #MEX is accessible
+        Write-Host "Test passed: MEX URL '$global:UserRealmMEX' is accessible." -ForegroundColor Green -BackgroundColor Black
+        ''
+        #count of windowstransport
+        Write-Host "Tesing windowstransport endpoints on your federation service..." -ForegroundColor Yellow
+        if (([regex]::Matches($WebResponse.Content, "windowstransport" )).count -ge 1){
+            #windowstransport is enabled
+            Write-Host "Test passed: windowstransport endpoint is enabled on your federation service." -ForegroundColor Green -BackgroundColor Black
+        }else{
+            Write-Host "Test failed: windowstransport endpoints are disabled on your federation service" -ForegroundColor Red -BackgroundColor Black
             ''
-            Write-Host "Recommended action: Make sure the MEX URL '"$global:MEXURL"'" "is accessible." -ForegroundColor Yellow
+            Write-Host "Recommended action: Make sure that windowstransport endpoints are enabled on your federation service." -ForegroundColor Yellow
+            Write-Host "Important Note: if your windows 10 version is 1803 or above, device registration will fall back to sync join." -ForegroundColor Yellow
             ''
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
             ''
-            exit
-
-        }else{
-            #MEX is accessible
-            Write-Host "Test passed: MEX URL '"$global:MEXURL"'" "is accessible." -ForegroundColor Green -BackgroundColor Black
             ''
-            #count of windowstransport
-            Write-Host "Tesing windowstransport endpoints on your federation service..." -ForegroundColor Yellow
-            if (([regex]::Matches($WebResponse.Content, "windowstransport" )).count -ge 1){
-                #windowstransport is enabled
-                Write-Host "Test passed: windowstransport endpoint is enabled on your federation service." -ForegroundColor Green -BackgroundColor Black
-            }else{
-                Write-Host "Test failed: windowstransport endpoints are disabled on your federation service" -ForegroundColor Red -BackgroundColor Black
-                ''
-                Write-Host "Recommended action: Make sure that windowstransport endpoints are enabled on your federation service." -ForegroundColor Yellow
-                Write-Host "Important Note: if your windows 10 version is 1803 or above, device registration will fall back to sync join." -ForegroundColor Yellow
-                ''
-                ''
-                Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
-                ''
-                exit          
-            }
-            }
-    }else{
-        #User signed in is not GA, and did not retreivd MEX URL
-        Write-Host "Test failed: the signed in user has no permission to retreive MEX URL." -ForegroundColor Red -BackgroundColor Black
-        ''
-        Write-Host "Recommended action: to test MEX URL sign in re-run the test and login to Azure AD using a user who has permission like GA" -ForegroundColor Yellow
-        ''
-        ''
-
-    
-
-
-
-}
-
+            exit          
+        }
+        }
 }   
         
-
     #Check DevReg app
     ''
     Write-Host "Testing Device Registration Service..." -ForegroundColor Yellow
@@ -2092,12 +2258,14 @@ if ($AADJ -ne "YES"){
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
         ''
+        ''
         exit                
     }
 
     ''
     ''
     Write-Host "Script completed successfully. You can start hybrid Azure AD registration process." -ForegroundColor Green -BackgroundColor Black
+    ''
     ''
     exit
 
@@ -2131,10 +2299,11 @@ if ($AADDevice.count -ge 1){
     ###Rejoin device to AAD
     Write-Host "Test failed: the device does not exist in your Azure AD tenant." -ForegroundColor Red -BackgroundColor Black
     ''
-    Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands to perform hybrid Azure AD join procedure again. If you have a Managed domain, make sure the device is in the sync scope." -ForegroundColor Yellow
+    Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again. If you have a Managed domain, make sure the device is in the sync scope." -ForegroundColor Yellow
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     ''
     exit
 }
@@ -2151,6 +2320,7 @@ if ($AADDevice.Enabled -eq $false){
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
     ''
+    ''
     exit
 }else{
         Write-Host "Test passed: the device is enabled on Azure AD tenant." -ForegroundColor Green -BackgroundColor Black
@@ -2165,12 +2335,13 @@ if (-not ($AltSec.StartsWith("X509:"))){
     Write-Host "Test failed: the device in 'Pending' state on Azure AD." -ForegroundColor Red -BackgroundColor Black
     ''
     Write-Host "Recommended actions: Device registration process will not trigger as the device feels itself as a registered device. To fix this issue, do the following:" -ForegroundColor Yellow
-    Write-Host "                     - Clear the device state by running the command 'dsregcmd /leave'. " -ForegroundColor Yellow
-    Write-Host "                     - Run 'dsregcmd /join' command to perform hybrid Azure AD join procedure and rerun the script." -ForegroundColor Yellow
+    Write-Host "                     - Clear the device state by running the command 'dsregcmd /leave' as admin. " -ForegroundColor Yellow
+    Write-Host "                     - Run 'dsregcmd /join' command as admin to perform hybrid Azure AD join procedure and re-run the script." -ForegroundColor Yellow
     Write-Host "                       If the issue still persists, check the possible courses on the article: http://www.microsoft.com/aadjerrors" -ForegroundColor Yellow
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+    ''
     ''
     exit
 
@@ -2191,6 +2362,7 @@ if (-not ($AltSec.StartsWith("X509:"))){
             ''
             Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
             ''
+            ''
             exit
         }else{
             #Check if there is atoken inside the path HKCU:\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\https://login.microsoftonline.com
@@ -2201,6 +2373,7 @@ if (-not ($AltSec.StartsWith("X509:"))){
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                ''
                 ''
                 exit                
             }else{
@@ -2217,7 +2390,7 @@ Write-Host "The device is connected to AAD as hybrid Azure AD joined device, and
 ''
 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
 ''
-    
+''    
 }
 $global:DomainAuthType=""
 $global:MEXURL=""
