@@ -1,7 +1,7 @@
 ﻿<# 
  
 .SYNOPSIS
-    DSRegTool V2 PowerShell script.
+    DSRegTool V2.1 PowerShell script.
 
 .DESCRIPTION
     Device Registration Troubleshooter Tool is a PowerShell script that troubleshhot device registration common issues.
@@ -249,8 +249,8 @@ $ProxyServer="NoProxy"
 $winHTTP = netsh winhttp show proxy
 $Proxy = $winHTTP | Select-String server
 $ProxyServer=$Proxy.ToString().TrimStart("Proxy Server(s) :  ")
-$Bypass = $winHTTP | Select-String Bypass
-$Bypass=$Bypass.ToString().TrimStart("Bypass List     :  ")
+$global:Bypass = $winHTTP | Select-String Bypass
+$global:Bypass=$global:Bypass.ToString().TrimStart("Bypass List     :  ")
 
 if ($ProxyServer -eq "Direct access (no proxy server)."){
     $ProxyServer="NoProxy"
@@ -260,9 +260,15 @@ if ($ProxyServer -eq "Direct access (no proxy server)."){
 if ( ($ProxyServer -ne "NoProxy") -and (-not($ProxyServer.StartsWith("http://")))){
     Write-Host "      Access Type : PROXY"
     Write-Host "Proxy Server List :" $ProxyServer
-    Write-Host "Proxy Bypass List :" $Bypass
+    Write-Host "Proxy Bypass List :" $global:Bypass
     $ProxyServer = "http://" + $ProxyServer
 }
+
+$global:login= $global:Bypass.Contains("*.microsoftonline.com") -or $global:Bypass.Contains("login.microsoftonline.com")
+
+$global:device= $global:Bypass.Contains("*.microsoftonline.com") -or $global:Bypass.Contains("*.login.microsoftonline.com") -or $global:Bypass.Contains("device.login.microsoftonline.com")
+
+$global:enterprise= $global:Bypass.Contains("*.windows.net") -or $global:Bypass.Contains("enterpriseregistration.windows.net")
 
 return $ProxyServer
 }
@@ -2073,24 +2079,41 @@ if ($AADJ -ne "YES"){
             Write-Host "Connection to enterpriseregistration.windows.net ........ failed." -ForegroundColor Red 
         }
     }else{
-        $PSScript = "(Invoke-WebRequest -uri 'login.microsoftonline.com' -UseBasicParsing -Proxy $ProxyServer).StatusCode"
-        $TestResult = RunPScript -PSScript $PSScript
+        if ($global:login){
+            $PSScript = "(Invoke-WebRequest -uri 'login.microsoftonline.com' -UseBasicParsing).StatusCode"
+            $TestResult = RunPScript -PSScript $PSScript
+        }else{
+            $PSScript = "(Invoke-WebRequest -uri 'login.microsoftonline.com' -UseBasicParsing -Proxy $ProxyServer).StatusCode"
+            $TestResult = RunPScript -PSScript $PSScript
+        }
         if ($TestResult -eq 200){
             Write-Host "Connection to login.microsoftonline.com .............. Succeeded." -ForegroundColor Green 
         }else{
             $TestFailed=$true
             Write-Host "Connection to login.microsoftonline.com ................. failed." -ForegroundColor Red 
         }
-        $PSScript = "(Invoke-WebRequest -uri 'device.login.microsoftonline.com' -UseBasicParsing -Proxy $ProxyServer).StatusCode"
-        $TestResult = RunPScript -PSScript $PSScript
+
+        if ($global:device){
+            $PSScript = "(Invoke-WebRequest -uri 'device.login.microsoftonline.com' -UseBasicParsing).StatusCode"
+            $TestResult = RunPScript -PSScript $PSScript
+        }else{
+            $PSScript = "(Invoke-WebRequest -uri 'device.login.microsoftonline.com' -UseBasicParsing -Proxy $ProxyServer).StatusCode"
+            $TestResult = RunPScript -PSScript $PSScript
+        }
         if ($TestResult -eq 200){
             Write-Host "Connection to device.login.microsoftonline.com ......  Succeeded." -ForegroundColor Green 
         }else{
             $TestFailed=$true
             Write-Host "Connection to device.login.microsoftonline.com .......... failed." -ForegroundColor Red 
         }
-        $PSScript = "(Invoke-WebRequest -uri 'https://enterpriseregistration.windows.net/$global:TenantName/discover?api-version=1.7' -UseBasicParsing -Proxy $ProxyServer -Headers @{'Accept' = 'application/json'; 'ocp-adrs-client-name' = 'dsreg'; 'ocp-adrs-client-version' = '10'}).StatusCode"
-        $TestResult = RunPScript -PSScript $PSScript
+
+        if ($global:enterprise){
+            $PSScript = "(Invoke-WebRequest -uri 'https://enterpriseregistration.windows.net/microsoft.com/discover?api-version=1.7' -UseBasicParsing -Headers @{'Accept' = 'application/json'; 'ocp-adrs-client-name' = 'dsreg'; 'ocp-adrs-client-version' = '10'}).StatusCode"
+            $TestResult = RunPScript -PSScript $PSScript
+        }else{
+            $PSScript = "(Invoke-WebRequest -uri 'https://enterpriseregistration.windows.net/microsoft.com/discover?api-version=1.7' -UseBasicParsing -Proxy $ProxyServer -Headers @{'Accept' = 'application/json'; 'ocp-adrs-client-name' = 'dsreg'; 'ocp-adrs-client-version' = '10'}).StatusCode"
+            $TestResult = RunPScript -PSScript $PSScript
+        }
         if ($TestResult -eq 200){
             Write-Host "Connection to enterpriseregistration.windows.net ..... Succeeded." -ForegroundColor Green 
         }else{
@@ -2199,8 +2222,19 @@ if ($AADJ -ne "YES"){
     Write-Host "Tesing Metadata Exchange URI (MEX) URL..." -ForegroundColor Yellow
     $ErrorActionPreference = "SilentlyContinue"
     $WebResponse=""
-    if ($ProxyServer -eq "NoProxy"){
 
+    #Check if FSName bypassed by proxy
+    $ADFSName=$global:UserRealmMEX -Split "https://"
+    $ADFSName=$ADFSName[1] -Split "/"
+    $FSName=$ADFSName[0]
+    $ADFSName=$FSName -split "\."
+    $ADFSName[0], $ADFSNameRest=$ADFSName
+    $ADFSNameAll = $ADFSNameRest -join '.'
+    $ADFSNameAll = "*."+$ADFSNameAll
+    $global:FedProxy= $global:Bypass.Contains($FSName) -or $global:Bypass.Contains($ADFSNameAll)
+
+    #If there is no proxy, or FSName bypassed by proxy
+    if (($ProxyServer -eq "NoProxy") -or ($global:FedProxy)){
         $PSScript = "Invoke-WebRequest -uri $global:UserRealmMEX -UseBasicParsing"
         $WebResponse = RunPScript -PSScript $PSScript
     }else{
@@ -2396,6 +2430,10 @@ $global:DomainAuthType=""
 $global:MEXURL=""
 $global:MEXURLRun=$true
 $global:DCTestPerformed=$false
+$global:Bypass=""
+$global:login=$false
+$global:device=$false
+$global:enterprise=$false
 
 cls
 '========================================================'
