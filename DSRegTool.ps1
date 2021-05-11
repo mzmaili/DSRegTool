@@ -4,7 +4,7 @@
     DSRegTool V2.1 PowerShell script.
 
 .DESCRIPTION
-    Device Registration Troubleshooter Tool is a PowerShell script that troubleshhot device registration common issues.
+    Device Registration Troubleshooter Tool is a PowerShell script that troubleshoots common issues with device registration.
 
 .AUTHOR:
     Mohammad Zmaili
@@ -1429,7 +1429,7 @@ Function NewFun{
 
     ''
     ''
-    Write-Host "The device is connected to AAD as hybrid Azure AD joined device, and it is in health state." -ForegroundColor Green -BackgroundColor Black
+    Write-Host "The device is connected to AAD as hybrid Azure AD joined device, and it is in healthty state." -ForegroundColor Green -BackgroundColor Black
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
@@ -2441,7 +2441,7 @@ cls
 Write-Host '        Device Registration Troubleshooter Tool          ' -ForegroundColor Green 
 '========================================================'
 ''
-Write-Host "Please provice any feedback, comment or suggestion" -ForegroundColor Yellow
+Write-Host "Please provide any feedback, comment or suggestion" -ForegroundColor Yellow
 Write-Host
 Write-Host "Enter (1) to troubleshoot Azure AD Register" -ForegroundColor Green
 ''
