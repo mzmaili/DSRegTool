@@ -1,10 +1,10 @@
 ﻿<# 
  
 .SYNOPSIS
-    DSRegTool V2.1 PowerShell script.
+    DSRegTool V2.2 PowerShell script.
 
 .DESCRIPTION
-    Device Registration Troubleshooter Tool is a PowerShell script that troubleshhot device registration common issues.
+    Device Registration Troubleshooter Tool is a PowerShell script that troubleshoots device registration common issues.
 
 .AUTHOR:
     Mohammad Zmaili
@@ -47,8 +47,7 @@ Function CheckePRT{
 }
 
 Function PSasAdmin{
-    $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-    $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())    $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
 Function CheckPRT{
@@ -384,7 +383,7 @@ if ($WPJ -ne "YES"){
 
 }else{
     #The device is WPJ join
-    $TenantName = $DSReg | Select-String TenantName 
+    $TenantName = $DSReg | Select-String WorkplaceTenantName
     $TenantName =($TenantName.tostring() -split ":")[1].trim()
     $hostname = hostname
     Write-Host "Test passed:" $hostname "device is connected to Azure AD tenant that has the name of" $TenantName "as Azure AD Register device" -ForegroundColor Green -BackgroundColor Black
@@ -442,7 +441,7 @@ if ($AADDevice.Enabled -eq $false){
 
 ''
 ''
-Write-Host "The device is connected to AAD as Azure AD Registered device, and it is in health state." -ForegroundColor Green -BackgroundColor Black
+Write-Host "The device is connected to AAD as Azure AD Registered device, and it is in healthty state." -ForegroundColor Green -BackgroundColor Black
 ''
 ''
 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
@@ -641,7 +640,7 @@ if ($AADJ -ne "YES"){
 
 }else{
     #The device is AAD join
-    $TenantName = $DSReg | Select-String TenantName 
+    $TenantName = $DSReg | Select-String TenantName | Select-Object -first 1
     $TenantName =($TenantName.tostring() -split ":")[1].trim()
     $hostname = hostname
     Write-Host "Test passed:" $hostname "device is joined to Azure AD tenant that has the name of" $TenantName -ForegroundColor Green -BackgroundColor Black
@@ -699,7 +698,7 @@ if ($AADDevice.Enabled -eq $false){
 
 ''
 ''
-Write-Host "The device is connected to AAD as Azure AD joined device, and it is in health state." -ForegroundColor Green -BackgroundColor Black
+Write-Host "The device is connected to AAD as Azure AD joined device, and it is in healthty state." -ForegroundColor Green -BackgroundColor Black
 ''
 ''
 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
@@ -881,25 +880,188 @@ Function VerifySCP{
     }
 }
 
-Function LogsCollection{
+#Log Collection functions
+Function ExportEventViewerLogs ($EventViewerLogs,$ExportPath){
+    ForEach ($EventViewerLog in $EventViewerLogs){		$EventViewerLogAfter = [regex]::Replace($EventViewerLog,"/","-")		$ExportedFileName = $ExportPath +"\"+ $EventViewerLogAfter+".evtx"
+        (New-Object System.Diagnostics.Eventing.Reader.EventLogSession).ExportLogAndMessages($EventViewerLog,'LogName','*',$ExportedFileName)    }
+}
+
+Function EnableDebugEvents ($DbgEvents){    ForEach ($evt in $DbgEvents){        $Log=New-Object System.Diagnostics.Eventing.Reader.EventlogConfiguration $evt        $Log.IsEnabled =$false        $Log.SaveChanges()        $Log.IsEnabled =$true        $Log.SaveChanges()    }}
+
+Function DisableDebugEvents ($DbgEvents){    ForEach ($evt in $DbgEvents){	    $Log = New-Object System.Diagnostics.Eventing.Reader.EventlogConfiguration $evt		$Log.IsEnabled = $false		$Log.SaveChanges()    }
+}
+
+Function CollectLogAADExt($RunLogs){
+    Push-Location $global:LogsPath    ForEach ($RunLog in $RunLogs){		cmd.exe /c $RunLog    }
+    Pop-Location
+}
+
+Function CollectLog($RunLogs){
+    Push-Location $global:LogsPath    ForEach ($RunLog in $RunLogs){		powershell.exe $RunLog    }
+    Pop-Location
+}
+
+Function CompressLogsFolder{    $CompressedFile = "DSRegTool_Logs_" + (get-date -Format yyyy-dd-MM_hh-mm)    $FolderContent = "$(Join-Path -Path $pwd.Path -ChildPath $CompressedFile).zip"    Add-Type -Assembly "System.IO.Compression.FileSystem"    [System.IO.Compression.ZipFile]::CreateFromDirectory($global:LogsPath, $FolderContent)
+    Write-host "Compressed file is ready in $FolderContent" -ForegroundColor Yellow
+    # Cleanup the Temporary Folder (if error retain the temp files)
+    if(Test-Path -Path $pwd.Path){
+		Remove-Item -Path $global:LogsPath -Force -Recurse | Out-Null
+    }else{		Write-host "The Archive could not be created. Keeping Temporary Folder $global:LogsPath"		New-Item -ItemType directory -Path $pwd.Path -Force | Out-Null    }
+}
+
+Function LogmanStart{
+    #WebAuth:
+    logman create trace "WebAuth" -ow -o $global:LogsPath\WebAuth.etl -nb 16 16 -bs 4096 -mode circular -f bincirc -max 1024 -ets | Out-Null
+	logman update trace "WebAuth" -p "{2A3C6602-411E-4DC6-B138-EA19D64F5BBA}" 0xFFFF 0xff  -ets | Out-Null
+    logman update trace "WebAuth" -p "{EF98103D-8D3A-4BEF-9DF2-2156563E64FA}" 0xFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{FB6A424F-B5D6-4329-B9B5-A975B3A93EAD}" 0x000003FF -ets | Out-Null
+    logman update trace "WebAuth" -p "{D93FE84A-795E-4608-80EC-CE29A96C8658}" 0x7FFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{3F8B9EF5-BBD2-4C81-B6C9-DA3CDB72D3C5}" 0x7 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{B1108F75-3252-4b66-9239-80FD47E06494}" 0x2FF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{C10B942D-AE1B-4786-BC66-052E5B4BE40E}" 0x3FF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{82c7d3df-434d-44fc-a7cc-453a8075144e}" 0x2FF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{05f02597-fe85-4e67-8542-69567ab8fd4f}" 0xFFFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{3C49678C-14AE-47FD-9D3A-4FEF5D796DB9}" 0xFFFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{077b8c4a-e425-578d-f1ac-6fdf1220ff68}" 0xFFFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{7acf487e-104b-533e-f68a-a7e9b0431edb}" 0xFFFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{5836994d-a677-53e7-1389-588ad1420cc5}" 0xFFFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{4DE9BC9C-B27A-43C9-8994-0915F1A5E24F}" 0xFFFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{bfed9100-35d7-45d4-bfea-6c1d341d4c6b}" 0xFFFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{9EBB3B15-B094-41B1-A3B8-0F141B06BADD}" 0xFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{6ae51639-98eb-4c04-9b88-9b313abe700f}" 0xFFFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{7B79E9B1-DB01-465C-AC8E-97BA9714BDA2}" 0xFFFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{86510A0A-FDF4-44FC-B42F-50DD7D77D10D}" 0xFFFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{08B15CE7-C9FF-5E64-0D16-66589573C50F}" 0xFFFFFF7F 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{63b6c2d2-0440-44de-a674-aa51a251b123}" 0xFFFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{4180c4f7-e238-5519-338f-ec214f0b49aa}" 0xFFFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{EB65A492-86C0-406A-BACE-9912D595BD69}" 0xFFFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{d49918cf-9489-4bf1-9d7b-014d864cf71f}" 0xFFFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{5AF52B0D-E633-4ead-828A-4B85B8DAAC2B}" 0xFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{2A6FAF47-5449-4805-89A3-A504F3E221A6}" 0xFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{EC3CA551-21E9-47D0-9742-1195429831BB}" 0xFFFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{bb8dd8e5-3650-5ca7-4fea-46f75f152414}" 0xFFFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{7fad10b2-2f44-5bb2-1fd5-65d92f9c7290}" 0xFFFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{74D91EC4-4680-40D2-A213-45E2D2B95F50}" 0xFFFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{556045FD-58C5-4A97-9881-B121F68B79C5}" 0xFFFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{5A9ED43F-5126-4596-9034-1DCFEF15CD11}" 0xFFFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{F7C77B8D-3E3D-4AA5-A7C5-1DB8B20BD7F0}" 0xFFFFFFFF 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{2745a526-23f5-4ef1-b1eb-db8932d43330}" 0xffffffffffffffff 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{d48533a7-98e4-566d-4956-12474e32a680}" 0xffffffffffffffff 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{072665fb-8953-5a85-931d-d06aeab3d109}" 0xffffffffffffffff 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{EF00584A-2655-462C-BC24-E7DE630E7FBF}" 0xffffffffffffffff 0xff -ets | Out-Null
+    logman update trace "WebAuth" -p "{c632d944-dddb-599f-a131-baf37bf22ef0}" 0xffffffffffffffff 0xff -ets | Out-Null
+
+    #Lsa:
+    logman create trace "LSA" -ow -o $global:LogsPath\LSA.etl -nb 16 16 -bs 4096 -mode circular -f bincirc -max 1024 -ets| Out-Null
+    logman update trace "LSA" -p "{D0B639E0-E650-4D1D-8F39-1580ADE72784}" 0xC43EFF 0xff -ets | Out-Null
+    logman update trace "LSA" -p "{169EC169-5B77-4A3E-9DB6-441799D5CACB}" 0xffffff 0xff -ets | Out-Null
+    logman update trace "LSA" -p "{DAA76F6A-2D11-4399-A646-1D62B7380F15}" 0xffffff 0xff -ets | Out-Null
+    logman update trace "LSA" -p "{366B218A-A5AA-4096-8131-0BDAFCC90E93}" 0xfffffff 0xff -ets | Out-Null
+    logman update trace "LSA" -p "{4D9DFB91-4337-465A-A8B5-05A27D930D48}" 0xff 0xff -ets | Out-Null
+    logman update trace "LSA" -p "{7FDD167C-79E5-4403-8C84-B7C0BB9923A1}" 0xFFF 0xff -ets | Out-Null
+    logman update trace "LSA" -p "{CA030134-54CD-4130-9177-DAE76A3C5791}" 0xfffffff 0xff -ets | Out-Null
+    logman update trace "LSA" -p "{5a5e5c0d-0be0-4f99-b57e-9b368dd2c76e}" 0xffffffffffffffff 0xff -ets | Out-Null
+    logman update trace "LSA" -p "{2D45EC97-EF01-4D4F-B9ED-EE3F4D3C11F3}" 0xffffffffffffffff 0xff -ets | Out-Null
+    logman update trace "LSA" -p "{C00D6865-9D89-47F1-8ACB-7777D43AC2B9}" 0xffffffffffffffff 0xff -ets | Out-Null
+    logman update trace "LSA" -p "{7C9FCA9A-EBF7-43FA-A10A-9E2BD242EDE6}" 0xffffffffffffffff 0xff -ets | Out-Null
+    logman update trace "LSA" -p "{794FE30E-A052-4B53-8E29-C49EF3FC8CBE}" 0xffffffffffffffff 0xff -ets | Out-Null
+    logman update trace "LSA" -p "{ba634d53-0db8-55c4-d406-5c57a9dd0264}" 0xffffffffffffffff 0xff -ets | Out-Null
+}
+
+Function LogmanStop{
+    logman stop "WebAuth" -ets  | Out-Null
+    logman stop "LSA" -ets  | Out-Null
+}
+
+Function StartLogCollection{
+    $global:PreTraceEvents = "Microsoft-Windows-AAD/Operational","Microsoft-Windows-User Device Registration/Admin","Microsoft-Windows-CAPI2/Operational","Microsoft-Windows-HelloForBusiness/Operational","Microsoft-Windows-LiveId/Operational","Microsoft-Windows-User Control Panel/Operational","Microsoft-Windows-WebAuth/Operational","Microsoft-Windows-WebAuthN/Operational","Microsoft-Windows-Biometrics/Operational","Microsoft-Windows-IdCtrls/Operational","Microsoft-Windows-Crypto-DPAPI/Operational"
+    $global:DebugLogs="Microsoft-Windows-AAD/Analytic","Microsoft-Windows-User Device Registration/Debug"
+    $global:Events = $global:PreTraceEvents + "Microsoft-Windows-AAD/Analytic","Microsoft-Windows-User Device Registration/Debug","System","Application","Microsoft-Windows-Shell-Core/Operational","Microsoft-Windows-Kerberos/Operational","Microsoft-Windows-CertPoleEng/Operational","Microsoft-Windows-Authentication/AuthenticationPolicyFailures-DomainController","Microsoft-Windows-Authentication/ProtectedUser-Client","Microsoft-Windows-Authentication/ProtectedUserFailures-DomainController","Microsoft-Windows-Authentication/ProtectedUserSuccesses-DomainController","Microsoft-Windows-WMI-Activity/Operational","Microsoft-Windows-GroupPolicy/Operational"
+
+    $global:CopyFiles='if (Test-Path "$env:windir\debug\netlogon.log"){Copy-Item "$env:windir\debug\netlogon.log" -Destination "netlogon.log" | Out-Null}',`
+    'if (Test-Path "$env:windir\system32\drivers\etc\hosts"){Copy-Item "$env:windir\system32\drivers\etc\hosts" -Destination "hosts.txt" | Out-Null}',`
+    'if (Test-Path "$env:windir\debug\Netsetup.log"){Copy-Item "$env:windir\debug\Netsetup.log" -Destination "Netsetup.log" | Out-Null}',`
+    'if (Test-Path "$env:windir\system32\Lsass.log"){Copy-Item "$env:windir\system32\Lsass.log" -Destination "Lsass.log" | Out-Null}'
+
+    $global:RegKeys = 'ipconfig /all > ipconfig-all.txt',`
+    'dsregcmd /status > dsregcmd-status.txt',`
+    'netstat -nao > netstat-nao.txt',`
+    'route print > route-print.txt',`
+    'net start > services-running.txt',`
+    'tasklist > tasklist.txt',`
+    'netsh winhttp show proxy > netsh-winhttp-proxy.txt',`
+    'wmic qfe list full /format:htable > Patches.htm',`
+    'GPResult /f /h GPResult.html',`
+    'regedit /e CloudDomainJoin.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\CloudDomainJoin',`
+    'regedit /e Lsa.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa',`
+    'regedit /e Netlogon.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netlogon',`
+    'regedit /e Schannel.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL',`
+    'regedit /e Winlogon.txt HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon',`
+    'regedit /e Winlogon-current-control-set.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Winlogon',`
+    'regedit /e IdentityStore.txt HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\IdentityStore',`
+    'regedit /e WorkplaceJoin-windows.txt HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WorkplaceJoin',`
+    'regedit /e WorkplaceJoin-control.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\WorkplaceJoin',`
+    'regedit /e SCP-client-side.txt HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\CDJ\AAD',`
+    'regedit /e WPJ-info.txt HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AAD'    $global:AADExt='set > set.txt',`
+    'sc query  > services-config.txt',`    'md AADExtention',`    'curl -H Metadata:true http://169.254.169.254/metadata/identity/info?api-version=2018-02-01 > .\AADExtention\metadata.txt 2>&0',`    'curl https://login.microsoftonline.com/ -D - > .\AADExtention\login.microsoftonline.com.txt 2>&0',`    'curl https://enterpriseregistration.windows.net/ -D - > .\AADExtention\enterpriseregistration.windows.net.txt 2>&0',`    'curl https://device.login.microsoftonline.com/ -D - > .\AADExtention\device.login.microsoftonline.com.txt 2>&0',`    'curl https://pas.windows.net/ -D - > .\AADExtention\pas.windows.net.txt 2>&0',`    'xcopy C:\WindowsAzure\Logs\Plugins\Microsoft.Azure.ActiveDirectory.AADLoginForWindows .\AADExtention\Microsoft.Azure.ActiveDirectory.AADLoginForWindows /E /H /C /I 2>&0 > null'        ''
+    Write-Host "Testing if script running with elevated privileges..." -ForegroundColor Yellow 
+    if (PSasAdmin){
+        # PS running as admin.
+        Write-Host "PowerShell is running with elevated privileges" -ForegroundColor Green -BackgroundColor Black
+        ''
+    }else{
+        Write-Host "PowerShell is NOT running with elevated privileges" -ForegroundColor Red -BackgroundColor Black
+        ''
+        Write-Host "Recommended action: Log collection should to be running with elevated privileges" -ForegroundColor Yellow -BackgroundColor Black
+        ''
+        ''
+        Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+        ''
+        ''
+        exit
+    }
+
+
+    #Create DSRegToolLogs folder.
+    Write-Host "Creating DSRegToolLogs folder under $pwd" -ForegroundColor Yellow
+    $global:LogsPath=$pwd.Path+"\DSRegToolLogs"
+    if (!(Test-Path $global:LogsPath)){
+        New-Item -itemType Directory -Path $global:LogsPath -Force | Out-Null
+    }else{
+        Remove-Item -Path $global:LogsPath -Force -Recurse | Out-Null
+        New-Item -itemType Directory -Path $global:LogsPath -Force | Out-Null
+    }
+
+    #Create PreTrace in DSRegToolLogs folder.
+    Write-Host "Checking PreTrace folder under $pwd\DSRegToolLogs" -ForegroundColor Yellow
+    $global:PreTrace=$pwd.Path+"\DSRegToolLogs\PreTrace"
+    if (!(Test-Path $global:PreTrace)){
+        New-Item -itemType Directory -Path $global:PreTrace -Force | Out-Null
+    }
+
+    #PreTrace
+    Write-Host "Collecting PreTrace logs..." -ForegroundColor Yellow
+    ExportEventViewerLogs $global:PreTraceEvents $global:PreTrace
+    dsregcmd /status | Out-file "$global:PreTrace\dsregcmd-status.txt"    RunPScript -PSScript "dsregcmd /debug" | Out-file "$global:PreTrace\dsregcmd-debug.txt"    #Press ENTER to start log collection:    ''    Write-Host "Please press ENTER to start log collection..." -ForegroundColor Green -NoNewline    Read-Host    Write-Host "Starting log collection..." -ForegroundColor Yellow    #Enable debug and network logs:    Write-Host "Enabling debug logs..." -ForegroundColor Yellow    EnableDebugEvents $global:DebugLogs    Write-Host "Starting network traces..." -ForegroundColor Yellow    LogmanStart    $Reg=Get-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\ProductOptions -ErrorAction SilentlyContinue
+    if ($Reg.ProductType -eq "WinNT"){
+        netsh trace start InternetClient persistent=yes traceFile=.\DSRegToolLogs\Netmon.etl capture=yes maxsize=1024| Out-Null
+    }else{
+        netsh trace start persistent=yes traceFile=.\DSRegToolLogs\Netmon.etl capture=yes maxsize=1024| Out-Null
+    }
+    ''    ''    Write-Host "Log collection has started, please start repro the issue..." -ForegroundColor Yellow    ''}Function StopLogCollection{    Write-Host "When repro finished, please press ENTER to stop log collection..." -ForegroundColor Green -NoNewline    Read-Host     #Disable debug and analytic logs:    DisableDebugEvents $global:DebugLogs    #Collect logs    Write-Host "Log collection has been stopped, please wait until we gather all files..." -ForegroundColor Yellow    Write-Host "Exporting event viewer logs..." -ForegroundColor Yellow    ExportEventViewerLogs $global:Events $global:LogsPath    Write-Host "Exporting files..." -ForegroundColor Yellow    CollectLog $global:CopyFiles    Write-Host "Exporting registry keys..." -ForegroundColor Yellow    RunPScript -PSScript "dsregcmd /debug" | Out-file "$global:LogsPath\dsregcmd-debug.txt"    CollectLog $global:RegKeys    CollectLogAADExt $global:AADExt    Write-Host "Stopping network traces..." -ForegroundColor Yellow    LogmanStop    netsh trace stop | Out-Null    Write-Host "Compressing collected logs..." -ForegroundColor Yellow    CompressLogsFolder
     ''
-    Write-Host "1. Get Auth script from the link https://github.com/CSS-Windows/WindowsDiag/blob/master/ADS/AUTH/Auth.zip"
     ''
-    Write-Host "2. Download the ZIP file to client and extract it"
+    Write-Host "Log collection completed successfully" -ForegroundColor Green -NoNewline
     ''
-    Write-Host "3. Rename start-auth.txt and stop-auth.txt to .bat files"
-    ''
-    Write-Host "4. Create a folder 'MSLogs' and move the start-auth.bat and stop-auth.bat"
-    ''
-    Write-Host "5. Open up admin command prompt on the win 10 client execute the start-auth.bat"
-    ''
-    Write-Host "6. Repro the issue"
-    ''
-    Write-Host "7. Execute stop-auth.bat from admin prompt"
-    ''
-    Write-Host "8. ZIP and send the logs to Microsoft support for analysis"
     ''
 }
+
+Function LogsCollection{
+    If ((((New-Object System.Diagnostics.Eventing.Reader.EventlogConfiguration "Microsoft-Windows-AAD/Analytic").IsEnabled) -and ((New-Object System.Diagnostics.Eventing.Reader.EventlogConfiguration "Microsoft-Windows-User Device Registration/Debug").IsEnabled))){        write-Host "Debug logs are enabled, it seems you started log collection." -ForegroundColor Yellow        write-Host "Do you want to continue with current log collection? [Y/N]" -ForegroundColor Yellow        $input=Read-Host "Enter 'Y' to continue, or 'N' to start a new log collection"        While(($input -ne 'y') -AND ($input -ne 'n')){
+            $input = Read-Host -Prompt "Invalid input. Please make a correct selection from the above options, and press Enter" 
+        }        if($input -eq 'y'){            #Test if DSRegToolLog folder exist            if(Test-Path $global:LogsPath){                #Stop log collection, when repro finished, please press ENTER.                StopLogCollection            }else{                Write-Host "Please locate DSRegToolLog folder/path where you start the tool previously, and start the tool again."            }        }elseif($input -eq 'n'){            #Start log collection from bigning            StartLogCollection            StopLogCollection        }    }else{        #Start log collection from bigning        StartLogCollection        StopLogCollection    }
+}
+#Eng of Log Collection functions
 
 Function CheckInternet
 {
@@ -1281,7 +1443,7 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
 Function NewFun{
 
                 #The device is hybrid Azure AD join
-                $TenantName = $DSReg | Select-String TenantName 
+                $TenantName = $DSReg | Select-String TenantName | Select-Object -first 1
                 $TenantName =($TenantName.tostring() -split ":")[1].trim()
                 $hostname = hostname
                 Write-Host $hostname "device is joined to Azure AD tenant that has the name of" $TenantName -ForegroundColor Green
@@ -1289,7 +1451,7 @@ Function NewFun{
                 ''
                 Write-Host "Checking Key provider..." -ForegroundColor Yellow
                 #Checking the KeyProvider:
-                $KeyProvider = $DSReg | Select-String KeyProvider
+                $KeyProvider = $DSReg | Select-String KeyProvider | Select-Object -first 1
                 $KeyProvider = ($KeyProvider.tostring() -split ":")[1].trim()
                 if (($KeyProvider -ne "Microsoft Platform Crypto Provider") -and ($KeyProvider -ne "Microsoft Software Key Storage Provider")){
                     Write-Host "The KeyProvider is not configured correctly." -ForegroundColor Red
@@ -1309,11 +1471,11 @@ Function NewFun{
                 # Check other values.
 
                 #Checking the certificate:
-                $DID = $DSReg | Select-String DeviceId
+                $DID = $DSReg | Select-String DeviceId | Select-Object -first 1
                 $DID = ($DID.ToString() -split ":")[1].Trim()
         
 
-                $DTP = $DSReg | Select-String Thumbprint
+                $DTP = $DSReg | Select-String Thumbprint | Select-Object -first 1
                 $DTP = ($DTP.ToString() -split ":")[1].Trim()
         
                 ''
@@ -1396,9 +1558,11 @@ Function NewFun{
 
         ''
         Write-Host "Checking dual state..." -ForegroundColor Yellow
+        $HAADJTID = $DSReg | Select-String TenantId | Select-Object -first 1
+        $WPJTID = $DSReg | Select-String WorkplaceTenantId | Select-Object -first 1
         $WPJ = $DSReg | Select-String WorkplaceJoined
         $WPJ = ($WPJ.tostring() -split ":")[1].trim()
-        if ($WPJ -eq "YES"){
+        if (($WPJ -eq "YES") -and ($HAADJTID -eq $WPJTID)){
             Write-Host "The device in dual state." -ForegroundColor Red
             ''
             Write-Host "Recommended action: upgrade your OS to Windows 10 1803 (with KB4489894 applied). In pre-1803 releases, you will need to remove the Azure AD registered state manually before enabling Hybrid Azure AD join by disconnecting the user from Access Work or School Account." -ForegroundColor Yellow
@@ -1408,28 +1572,28 @@ Function NewFun{
             ''
             ''
             exit
-        }else{
+        }elseif ($WPJ -ne "YES"){
             #Check if there is atoken inside the path HKCU:\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\https://login.microsoftonline.com
             if ((Get-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\https://login.microsoftonline.com -ErrorAction SilentlyContinue).PSPath){
                 Write-Host "The device in dual state." -ForegroundColor Red
                 ''
-                Write-Host "Recommended action: remove the regostry key 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\'" -ForegroundColor Yellow
+                Write-Host "Recommended action: remove the registry key 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\'" -ForegroundColor Yellow
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
                 ''
                 ''
                 exit                
-            }else{
-                Write-Host "The device is not in dual state." -ForegroundColor Green
             }
+        }else{
+                Write-Host "The device is not in dual state." -ForegroundColor Green
         }
 
 
 
     ''
     ''
-    Write-Host "The device is connected to AAD as hybrid Azure AD joined device, and it is in health state." -ForegroundColor Green -BackgroundColor Black
+    Write-Host "The device is connected to AAD as hybrid Azure AD joined device, and it is in healthty state." -ForegroundColor Green -BackgroundColor Black
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
@@ -1440,7 +1604,7 @@ Function NewFun{
 Function NewFunAAD{
 
                 #The device is Azure AD joined
-                $TenantName = $DSReg | Select-String TenantName 
+                $TenantName = $DSReg | Select-String TenantName | Select-Object -first 1
                 $TenantName =($TenantName.tostring() -split ":")[1].trim()
                 $hostname = hostname
                 Write-Host $hostname "device is joined to Azure AD tenant that has the name of" $TenantName -ForegroundColor Green
@@ -1535,7 +1699,7 @@ Function NewFunAAD{
 
     ''
     ''
-    Write-Host "The device is connected successfully to AAD as Azure AD joined device, and it is in health state." -ForegroundColor Green -BackgroundColor Black
+    Write-Host "The device is connected successfully to AAD as Azure AD joined device, and it is in healthty state." -ForegroundColor Green -BackgroundColor Black
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
@@ -1620,7 +1784,7 @@ Function NewFunWPJ{
 
     ''
     ''
-    Write-Host "The device is connected successfully to AAD as Azure AD registered device, and it is in health state." -ForegroundColor Green -BackgroundColor Black
+    Write-Host "The device is connected successfully to AAD as Azure AD registered device, and it is in healthty state." -ForegroundColor Green -BackgroundColor Black
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
@@ -1680,7 +1844,7 @@ Function DJ++1{
 
             }else{
                 #The device is hybrid Azure AD join
-                $TenantName = $DSReg | Select-String TenantName 
+                $TenantName = $DSReg | Select-String TenantName | Select-Object -first 1
                 $TenantName =($TenantName.tostring() -split ":")[1].trim()
                 $hostname = hostname
                 Write-Host $hostname "device is joined to Azure AD tenant that has the name of" $TenantName -ForegroundColor Green
@@ -1816,7 +1980,7 @@ Function DJ++1{
 
     ''
     ''
-    Write-Host "The device is connected to AAD as hybrid Azure AD joined device, and it is in health state." -ForegroundColor Green -BackgroundColor Black
+    Write-Host "The device is connected to AAD as hybrid Azure AD joined device, and it is in healthty state." -ForegroundColor Green -BackgroundColor Black
     ''
     ''
     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
@@ -2306,7 +2470,7 @@ if ($AADJ -ne "YES"){
 
 }else{
     #The device is hybrid Azure AD join
-    $TenantName = $DSReg | Select-String TenantName 
+    $TenantName = $DSReg | Select-String TenantName | Select-Object -first 1
     $TenantName =($TenantName.tostring() -split ":")[1].trim()
     $hostname = hostname
     Write-Host "Test passed:" $hostname "device is joined to Azure AD tenant that has the name of" $TenantName -ForegroundColor Green -BackgroundColor Black
@@ -2387,9 +2551,11 @@ if (-not ($AltSec.StartsWith("X509:"))){
 
         ''
         Write-Host "Checking dual state..." -ForegroundColor Yellow
+        $HAADJTID = $DSReg | Select-String TenantId | Select-Object -first 1
+        $WPJTID = $DSReg | Select-String WorkplaceTenantId | Select-Object -first 1
         $WPJ = $DSReg | Select-String WorkplaceJoined
         $WPJ = ($WPJ.tostring() -split ":")[1].trim()
-        if ($WPJ -eq "YES"){
+        if (($WPJ -eq "YES") -and ($HAADJTID -eq $WPJTID)){
             Write-Host "The device in dual state." -ForegroundColor Red
             ''
             Write-Host "Recommended action: upgrade your OS to Windows 10 1803 (with KB4489894 applied). In pre-1803 releases, you will need to remove the Azure AD registered state manually before enabling Hybrid Azure AD join by disconnecting the user from Access Work or School Account." -ForegroundColor Yellow
@@ -2399,28 +2565,28 @@ if (-not ($AltSec.StartsWith("X509:"))){
             ''
             ''
             exit
-        }else{
+        }elseif ($WPJ -ne "YES"){
             #Check if there is atoken inside the path HKCU:\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\https://login.microsoftonline.com
             if ((Get-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\https://login.microsoftonline.com -ErrorAction SilentlyContinue).PSPath){
                 Write-Host "The device in dual state." -ForegroundColor Red
                 ''
-                Write-Host "Recommended action: remove the regostry key 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\'" -ForegroundColor Yellow
+                Write-Host "Recommended action: remove the registry key 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\'" -ForegroundColor Yellow
                 ''
                 ''
                 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
                 ''
                 ''
                 exit                
-            }else{
-                Write-Host "Test passed: the device is not in dual state." -ForegroundColor Green -BackgroundColor Black
             }
+        }else{
+                Write-Host "The device is not in dual state." -ForegroundColor Green
         }
 
 
 
 ''
 ''
-Write-Host "The device is connected to AAD as hybrid Azure AD joined device, and it is in health state." -ForegroundColor Green -BackgroundColor Black
+Write-Host "The device is connected to AAD as hybrid Azure AD joined device, and it is in healthty state." -ForegroundColor Green -BackgroundColor Black
 ''
 ''
 Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
@@ -2441,7 +2607,7 @@ cls
 Write-Host '        Device Registration Troubleshooter Tool          ' -ForegroundColor Green 
 '========================================================'
 ''
-Write-Host "Please provice any feedback, comment or suggestion" -ForegroundColor Yellow
+Write-Host "Please provide any feedback, comment or suggestion" -ForegroundColor Yellow
 Write-Host
 Write-Host "Enter (1) to troubleshoot Azure AD Register" -ForegroundColor Green
 ''
