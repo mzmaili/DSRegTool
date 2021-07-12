@@ -31,6 +31,100 @@
 
 #>
 
+Function Test-DevRegConnectivity($Write){
+    $TestConnResult=@()
+    If($Write){Write-Host}
+    If($Write){Write-Host "Testing Internet Connectivity..." -ForegroundColor Yellow}
+    $ErrorActionPreference= 'silentlycontinue'
+    $global:TestFailed=$false
+
+    $global:ProxyServer = checkProxy $Write
+    If($Write){Write-Host}
+    If($Write){Write-Host "Testing Device Registration Endpoints..." -ForegroundColor Yellow}
+    if ($global:ProxyServer -eq "NoProxy"){
+        $PSScript = "(Invoke-WebRequest -uri 'login.microsoftonline.com' -UseBasicParsing).StatusCode"
+        $TestResult = RunPScript -PSScript $PSScript
+        if ($TestResult -eq 200){
+            If($Write){Write-Host "Connection to login.microsoftonline.com .............. Succeeded." -ForegroundColor Green }
+            $TestConnResult = $TestConnResult + "Connection to login.microsoftonline.com .............. Succeeded."
+        }else{
+            $global:TestFailed=$true
+            If($Write){Write-Host "Connection to login.microsoftonline.com ................. failed." -ForegroundColor Red }
+            $TestConnResult = $TestConnResult + "Connection to login.microsoftonline.com ................. failed."
+        }
+        $PSScript = "(Invoke-WebRequest -uri 'device.login.microsoftonline.com' -UseBasicParsing).StatusCode"
+        $TestResult = RunPScript -PSScript $PSScript
+        if ($TestResult -eq 200){
+            If($Write){Write-Host "Connection to device.login.microsoftonline.com ......  Succeeded." -ForegroundColor Green }
+            $TestConnResult = $TestConnResult + "Connection to device.login.microsoftonline.com ......  Succeeded."
+        }else{
+            $global:TestFailed=$true
+            If($Write){Write-Host "Connection to device.login.microsoftonline.com .......... failed." -ForegroundColor Red }
+            $TestConnResult = $TestConnResult + "Connection to device.login.microsoftonline.com .......... failed."
+        }
+
+        $PSScript = "(Invoke-WebRequest -uri 'https://enterpriseregistration.windows.net/$global:TenantName/discover?api-version=1.7' -UseBasicParsing -Headers @{'Accept' = 'application/json'; 'ocp-adrs-client-name' = 'dsreg'; 'ocp-adrs-client-version' = '10'}).StatusCode"
+        $TestResult = RunPScript -PSScript $PSScript
+        if ($TestResult -eq 200){
+            If($Write){Write-Host "Connection to enterpriseregistration.windows.net ..... Succeeded." -ForegroundColor Green }
+            $TestConnResult = $TestConnResult + "Connection to enterpriseregistration.windows.net ..... Succeeded."
+        }else{
+            $global:TestFailed=$true
+            If($Write){Write-Host "Connection to enterpriseregistration.windows.net ........ failed." -ForegroundColor Red }
+            $TestConnResult = $TestConnResult + "Connection to enterpriseregistration.windows.net ........ failed."
+        }
+    }else{
+        if ($global:login){
+            $PSScript = "(Invoke-WebRequest -uri 'login.microsoftonline.com' -UseBasicParsing).StatusCode"
+            $TestResult = RunPScript -PSScript $PSScript
+        }else{
+            $PSScript = "(Invoke-WebRequest -uri 'login.microsoftonline.com' -UseBasicParsing -Proxy $global:ProxyServer).StatusCode"
+            $TestResult = RunPScript -PSScript $PSScript
+        }
+        if ($TestResult -eq 200){
+            If($Write){Write-Host "Connection to login.microsoftonline.com .............. Succeeded." -ForegroundColor Green }
+            $TestConnResult = $TestConnResult + "Connection to login.microsoftonline.com .............. Succeeded."
+        }else{
+            $global:TestFailed=$true
+            If($Write){Write-Host "Connection to login.microsoftonline.com ................. failed." -ForegroundColor Red }
+            $TestConnResult = $TestConnResult + "Connection to login.microsoftonline.com ................. failed."
+        }
+
+        if ($global:device){
+            $PSScript = "(Invoke-WebRequest -uri 'device.login.microsoftonline.com' -UseBasicParsing).StatusCode"
+            $TestResult = RunPScript -PSScript $PSScript
+        }else{
+            $PSScript = "(Invoke-WebRequest -uri 'device.login.microsoftonline.com' -UseBasicParsing -Proxy $global:ProxyServer).StatusCode"
+            $TestResult = RunPScript -PSScript $PSScript
+        }
+        if ($TestResult -eq 200){
+            If($Write){Write-Host "Connection to device.login.microsoftonline.com ......  Succeeded." -ForegroundColor Green }
+            $TestConnResult = $TestConnResult + "Connection to device.login.microsoftonline.com ......  Succeeded."
+        }else{
+            $global:TestFailed=$true
+            If($Write){Write-Host "Connection to device.login.microsoftonline.com .......... failed." -ForegroundColor Red }
+            $TestConnResult = $TestConnResult + "Connection to device.login.microsoftonline.com .......... failed."
+        }
+
+        if ($global:enterprise){
+            $PSScript = "(Invoke-WebRequest -uri 'https://enterpriseregistration.windows.net/microsoft.com/discover?api-version=1.7' -UseBasicParsing -Headers @{'Accept' = 'application/json'; 'ocp-adrs-client-name' = 'dsreg'; 'ocp-adrs-client-version' = '10'}).StatusCode"
+            $TestResult = RunPScript -PSScript $PSScript
+        }else{
+            $PSScript = "(Invoke-WebRequest -uri 'https://enterpriseregistration.windows.net/microsoft.com/discover?api-version=1.7' -UseBasicParsing -Proxy $global:ProxyServer -Headers @{'Accept' = 'application/json'; 'ocp-adrs-client-name' = 'dsreg'; 'ocp-adrs-client-version' = '10'}).StatusCode"
+            $TestResult = RunPScript -PSScript $PSScript
+        }
+        if ($TestResult -eq 200){
+            If($Write){Write-Host "Connection to enterpriseregistration.windows.net ..... Succeeded." -ForegroundColor Green }
+            $TestConnResult = $TestConnResult + "Connection to enterpriseregistration.windows.net ..... Succeeded."
+        }else{
+            $global:TestFailed=$true
+            If($Write){Write-Host "Connection to enterpriseregistration.windows.net ........ failed." -ForegroundColor Red }
+            $TestConnResult = $TestConnResult + "Connection to enterpriseregistration.windows.net ........ failed."
+        }
+    }
+    return $TestConnResult
+}
+
 Function CheckePRT{
     ''
     Write-Host "Testing Enterprise PRT..." -ForegroundColor Yellow
@@ -242,26 +336,26 @@ if (PSasAdmin){
     }
 }
 
-Function checkProxy{
+Function checkProxy($Write){
 # Check Proxy settings
-Write-Host "Checking winHTTP proxy settings..." -ForegroundColor Yellow
-$ProxyServer="NoProxy"
+If($Write){Write-Host "Checking winHTTP proxy settings..." -ForegroundColor Yellow}
+$global:ProxyServer="NoProxy"
 $winHTTP = netsh winhttp show proxy
 $Proxy = $winHTTP | Select-String server
-$ProxyServer=$Proxy.ToString().TrimStart("Proxy Server(s) :  ")
+$global:ProxyServer=$Proxy.ToString().TrimStart("Proxy Server(s) :  ")
 $global:Bypass = $winHTTP | Select-String Bypass
 $global:Bypass=$global:Bypass.ToString().TrimStart("Bypass List     :  ")
 
-if ($ProxyServer -eq "Direct access (no proxy server)."){
-    $ProxyServer="NoProxy"
-    Write-Host "Access Type : DIRECT"
+if ($global:ProxyServer -eq "Direct access (no proxy server)."){
+    $global:ProxyServer="NoProxy"
+    If($Write){Write-Host "Access Type : DIRECT"}
 }
 
-if ( ($ProxyServer -ne "NoProxy") -and (-not($ProxyServer.StartsWith("http://")))){
-    Write-Host "      Access Type : PROXY"
-    Write-Host "Proxy Server List :" $ProxyServer
-    Write-Host "Proxy Bypass List :" $global:Bypass
-    $ProxyServer = "http://" + $ProxyServer
+if ( ($global:ProxyServer -ne "NoProxy") -and (-not($global:ProxyServer.StartsWith("http://")))){
+    If($Write){Write-Host "      Access Type : PROXY"}
+    If($Write){Write-Host "Proxy Server List :" $global:ProxyServer}
+    If($Write){Write-Host "Proxy Bypass List :" $global:Bypass}
+    $global:ProxyServer = "http://" + $global:ProxyServer
 }
 
 $global:login= $global:Bypass.Contains("*.microsoftonline.com") -or $global:Bypass.Contains("login.microsoftonline.com")
@@ -270,7 +364,7 @@ $global:device= $global:Bypass.Contains("*.microsoftonline.com") -or $global:Byp
 
 $global:enterprise= $global:Bypass.Contains("*.windows.net") -or $global:Bypass.Contains("enterpriseregistration.windows.net")
 
-return $ProxyServer
+return $global:ProxyServer
 }
 
 Function WPJTS{
@@ -1020,13 +1114,13 @@ Function StartLogCollection{
     #PreTrace
     Write-Host "Collecting PreTrace logs..." -ForegroundColor Yellow
     ExportEventViewerLogs $global:PreTraceEvents $global:PreTrace
-    dsregcmd /status | Out-file "$global:PreTrace\dsregcmd-status.txt"    RunPScript -PSScript "dsregcmd /debug" | Out-file "$global:PreTrace\dsregcmd-debug.txt"    #Press ENTER to start log collection:    ''    Write-Host "Please press ENTER to start log collection..." -ForegroundColor Green -NoNewline    Read-Host    Write-Host "Starting log collection..." -ForegroundColor Yellow    #Enable debug and network logs:    Write-Host "Enabling debug logs..." -ForegroundColor Yellow    EnableDebugEvents $global:DebugLogs    Write-Host "Starting network traces..." -ForegroundColor Yellow    LogmanStart "WebAuth" $WebAuth    LogmanStart "LSA" $LSA    LogmanStart "Ntlm_CredSSP" $Ntlm_CredSSP    LogmanStart "Kerberos" $Kerberos    $Reg=Get-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\ProductOptions -ErrorAction SilentlyContinue
+    dsregcmd /status | Out-file "$global:PreTrace\dsregcmd-status.txt"    RunPScript -PSScript "dsregcmd /status /debug" | Out-file "$global:PreTrace\dsregcmd-debug.txt"    #Press ENTER to start log collection:    ''    Write-Host "Please press ENTER to start log collection..." -ForegroundColor Green -NoNewline    Read-Host    Write-Host "Starting log collection..." -ForegroundColor Yellow    #Enable debug and network logs:    Write-Host "Enabling debug logs..." -ForegroundColor Yellow    EnableDebugEvents $global:DebugLogs    Write-Host "Starting network traces..." -ForegroundColor Yellow    LogmanStart "WebAuth" $WebAuth    LogmanStart "LSA" $LSA    LogmanStart "Ntlm_CredSSP" $Ntlm_CredSSP    LogmanStart "Kerberos" $Kerberos    $Reg=Get-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\ProductOptions -ErrorAction SilentlyContinue
     if ($Reg.ProductType -eq "WinNT"){
         netsh trace start InternetClient persistent=yes traceFile=.\DSRegToolLogs\Netmon.etl capture=yes maxsize=1024| Out-Null
     }else{
         netsh trace start persistent=yes traceFile=.\DSRegToolLogs\Netmon.etl capture=yes maxsize=1024| Out-Null
     }
-    ''    ''    Write-Host "Log collection has started, please start repro the issue..." -ForegroundColor Yellow    ''}Function StopLogCollection{    Write-Host "When repro finished, please press ENTER to stop log collection..." -ForegroundColor Green -NoNewline    Read-Host     #Disable debug and analytic logs:    DisableDebugEvents $global:DebugLogs    #Collect logs    Write-Host "Log collection has been stopped, please wait until we gather all files..." -ForegroundColor Yellow    Write-Host "Exporting event viewer logs..." -ForegroundColor Yellow    ExportEventViewerLogs $global:Events $global:LogsPath    Write-Host "Exporting files..." -ForegroundColor Yellow    CollectLog $global:CopyFiles    Write-Host "Exporting registry keys..." -ForegroundColor Yellow    RunPScript -PSScript "dsregcmd /debug" | Out-file "$global:PreTrace\dsregcmd-debug.txt"    CollectLog $global:RegKeys    CollectLogAADExt $global:AADExt    Write-Host "Stopping network traces..." -ForegroundColor Yellow    LogmanStop "WebAuth"    LogmanStop "LSA"    LogmanStop "Ntlm_CredSSP"    LogmanStop "Kerberos"    netsh trace stop | Out-Null    Write-Host "Compressing collected logs..." -ForegroundColor Yellow    CompressLogsFolder
+    ''    ''    Write-Host "Log collection has started, please start repro the issue..." -ForegroundColor Yellow    ''}Function StopLogCollection{    Write-Host "When repro finished, please press ENTER to stop log collection..." -ForegroundColor Green -NoNewline    Read-Host     #Disable debug and analytic logs:    DisableDebugEvents $global:DebugLogs    #Collect logs    Write-Host "Log collection has been stopped, please wait until we gather all files..." -ForegroundColor Yellow    Write-Host "Exporting event viewer logs..." -ForegroundColor Yellow    ExportEventViewerLogs $global:Events $global:LogsPath    Write-Host "Exporting files..." -ForegroundColor Yellow    CollectLog $global:CopyFiles    Write-Host "Exporting registry keys..." -ForegroundColor Yellow    RunPScript -PSScript "dsregcmd /status /debug" | Out-file "$global:LogsPath\dsregcmd-debug.txt"    Test-DevRegConnectivity $false | Out-file "$global:LogsPath\TestDeviceRegConnectivity.txt"    CollectLog $global:RegKeys    CollectLogAADExt $global:AADExt    Write-Host "Stopping network traces..." -ForegroundColor Yellow    LogmanStop "WebAuth"    LogmanStop "LSA"    LogmanStop "Ntlm_CredSSP"    LogmanStop "Kerberos"    netsh trace stop | Out-Null    Write-Host "Compressing collected logs..." -ForegroundColor Yellow    CompressLogsFolder
     ''
     ''
     Write-Host "Log collection completed successfully" -ForegroundColor Green -NoNewline
@@ -2100,6 +2194,7 @@ Function DJ++{
 
 
 Function DJ++TS{
+$ErrorActionPreference= 'silentlycontinue'
 #Check PSAdmin
 ''
 Write-Host "Testing if PowerShell running with elevated privileges..." -ForegroundColor Yellow 
@@ -2218,88 +2313,11 @@ if ($AADJ -ne "YES"){
         }
     }
 
-    #Checking Internet connectivity###
-    ''
-    Write-Host "Testing Internet Connectivity..." -ForegroundColor Yellow
-    ###conn
-    $ErrorActionPreference= 'silentlycontinue'
-    $TestFailed=$false
-
-    $ProxyServer = checkProxy
-    ''
-    Write-Host "Testing Device Registration Endpoints..." -ForegroundColor Yellow
-    if ($ProxyServer -eq "NoProxy"){
-        $PSScript = "(Invoke-WebRequest -uri 'login.microsoftonline.com' -UseBasicParsing).StatusCode"
-        $TestResult = RunPScript -PSScript $PSScript
-        if ($TestResult -eq 200){
-            Write-Host "Connection to login.microsoftonline.com .............. Succeeded." -ForegroundColor Green 
-        }else{
-            $TestFailed=$true
-            Write-Host "Connection to login.microsoftonline.com ................. failed." -ForegroundColor Red 
-        }
-        $PSScript = "(Invoke-WebRequest -uri 'device.login.microsoftonline.com' -UseBasicParsing).StatusCode"
-        $TestResult = RunPScript -PSScript $PSScript
-        if ($TestResult -eq 200){
-            Write-Host "Connection to device.login.microsoftonline.com ......  Succeeded." -ForegroundColor Green 
-        }else{
-            $TestFailed=$true
-            Write-Host "Connection to device.login.microsoftonline.com .......... failed." -ForegroundColor Red 
-        }
-
-        $PSScript = "(Invoke-WebRequest -uri 'https://enterpriseregistration.windows.net/$global:TenantName/discover?api-version=1.7' -UseBasicParsing -Headers @{'Accept' = 'application/json'; 'ocp-adrs-client-name' = 'dsreg'; 'ocp-adrs-client-version' = '10'}).StatusCode"
-        $TestResult = RunPScript -PSScript $PSScript
-        if ($TestResult -eq 200){
-            Write-Host "Connection to enterpriseregistration.windows.net ..... Succeeded." -ForegroundColor Green 
-        }else{
-            $TestFailed=$true
-            Write-Host "Connection to enterpriseregistration.windows.net ........ failed." -ForegroundColor Red 
-        }
-    }else{
-        if ($global:login){
-            $PSScript = "(Invoke-WebRequest -uri 'login.microsoftonline.com' -UseBasicParsing).StatusCode"
-            $TestResult = RunPScript -PSScript $PSScript
-        }else{
-            $PSScript = "(Invoke-WebRequest -uri 'login.microsoftonline.com' -UseBasicParsing -Proxy $ProxyServer).StatusCode"
-            $TestResult = RunPScript -PSScript $PSScript
-        }
-        if ($TestResult -eq 200){
-            Write-Host "Connection to login.microsoftonline.com .............. Succeeded." -ForegroundColor Green 
-        }else{
-            $TestFailed=$true
-            Write-Host "Connection to login.microsoftonline.com ................. failed." -ForegroundColor Red 
-        }
-
-        if ($global:device){
-            $PSScript = "(Invoke-WebRequest -uri 'device.login.microsoftonline.com' -UseBasicParsing).StatusCode"
-            $TestResult = RunPScript -PSScript $PSScript
-        }else{
-            $PSScript = "(Invoke-WebRequest -uri 'device.login.microsoftonline.com' -UseBasicParsing -Proxy $ProxyServer).StatusCode"
-            $TestResult = RunPScript -PSScript $PSScript
-        }
-        if ($TestResult -eq 200){
-            Write-Host "Connection to device.login.microsoftonline.com ......  Succeeded." -ForegroundColor Green 
-        }else{
-            $TestFailed=$true
-            Write-Host "Connection to device.login.microsoftonline.com .......... failed." -ForegroundColor Red 
-        }
-
-        if ($global:enterprise){
-            $PSScript = "(Invoke-WebRequest -uri 'https://enterpriseregistration.windows.net/microsoft.com/discover?api-version=1.7' -UseBasicParsing -Headers @{'Accept' = 'application/json'; 'ocp-adrs-client-name' = 'dsreg'; 'ocp-adrs-client-version' = '10'}).StatusCode"
-            $TestResult = RunPScript -PSScript $PSScript
-        }else{
-            $PSScript = "(Invoke-WebRequest -uri 'https://enterpriseregistration.windows.net/microsoft.com/discover?api-version=1.7' -UseBasicParsing -Proxy $ProxyServer -Headers @{'Accept' = 'application/json'; 'ocp-adrs-client-name' = 'dsreg'; 'ocp-adrs-client-version' = '10'}).StatusCode"
-            $TestResult = RunPScript -PSScript $PSScript
-        }
-        if ($TestResult -eq 200){
-            Write-Host "Connection to enterpriseregistration.windows.net ..... Succeeded." -ForegroundColor Green 
-        }else{
-            $TestFailed=$true
-            Write-Host "Connection to enterpriseregistration.windows.net ........ failed." -ForegroundColor Red 
-        }
-    }
+    #Checking Internet connectivity
+    Test-DevRegConnectivity $true | Out-Null
 
     # If test failed
-    if ($TestFailed){
+    if ($global:TestFailed){
         ''
         ''
         Write-Host "Test failed: device is not able to communicate with MS endpoints under system account" -ForegroundColor red -BackgroundColor Black
@@ -2326,18 +2344,29 @@ if ($AADJ -ne "YES"){
     #check through proxy if exist
     #run under sys account
     $UserRelmURL = "https://login.microsoftonline.com/common/UserRealm/?user=$global:TenantName&api-version=1.0"
-    if ($ProxyServer -eq "NoProxy"){
+    if ($global:ProxyServer -eq "NoProxy"){
         #$UserRealmJson= Invoke-WebRequest -uri $UserRelmURL -UseBasicParsing
         $PSScript = "Invoke-WebRequest -uri '$UserRelmURL' -UseBasicParsing"
-        $UserRealmJson = RunPScript -PSScript $PSScript
+        $UserRealmJson = RunPScript -PSScript $PSScript | Out-Null
      }else{
-        #$UserRealmJson= Invoke-WebRequest -uri $UserRelmURL -UseBasicParsing -Proxy $ProxyServer
-
-        $PSScript = "Invoke-WebRequest -uri '$UserRelmURL' -UseBasicParsing -Proxy $ProxyServer"
-        $UserRealmJson = RunPScript -PSScript $PSScript
+        #$UserRealmJson= Invoke-WebRequest -uri $UserRelmURL -UseBasicParsing -Proxy $global:ProxyServer
+        $PSScript = "Invoke-WebRequest -uri '$UserRelmURL' -UseBasicParsing -Proxy $global:ProxyServer"
+        $UserRealmJson = RunPScript -PSScript $PSScript | Out-Null
      }
     
-    
+    if(!($UserRealmJson)){
+        ''
+        Write-Host "Test failed: Could not check domain authentication type." -ForegroundColor Red -BackgroundColor Black
+        ''
+        Write-Host "Recommended action: Make sure the device has Internet connectivity." -ForegroundColor Yellow
+        ''
+        ''
+        Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+        ''
+        ''
+        exit  
+    }
+
     $UserRealm = $UserRealmJson.Content | ConvertFrom-Json
     $global:UserRealmMEX = $UserRealm.federation_metadata_url
     $global:FedProtocol = $UserRealm.federation_protocol
@@ -2410,11 +2439,11 @@ if ($AADJ -ne "YES"){
     $global:FedProxy= $global:Bypass.Contains($FSName) -or $global:Bypass.Contains($ADFSNameAll)
 
     #If there is no proxy, or FSName bypassed by proxy
-    if (($ProxyServer -eq "NoProxy") -or ($global:FedProxy)){
+    if (($global:ProxyServer -eq "NoProxy") -or ($global:FedProxy)){
         $PSScript = "Invoke-WebRequest -uri $global:UserRealmMEX -UseBasicParsing"
         $WebResponse = RunPScript -PSScript $PSScript
     }else{
-        $PSScript = "Invoke-WebRequest -uri $global:UserRealmMEX -UseBasicParsing -Proxy $ProxyServer"
+        $PSScript = "Invoke-WebRequest -uri $global:UserRealmMEX -UseBasicParsing -Proxy $global:ProxyServer"
         $WebResponse = RunPScript -PSScript $PSScript
     }
 
