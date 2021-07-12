@@ -924,36 +924,7 @@ Function LogmanStop($Trace){
 }
 
 Function StartLogCollection{
-    $global:PreTraceEvents = "Microsoft-Windows-AAD/Operational","Microsoft-Windows-User Device Registration/Admin","Microsoft-Windows-CAPI2/Operational","Microsoft-Windows-HelloForBusiness/Operational","Microsoft-Windows-LiveId/Operational","Microsoft-Windows-User Control Panel/Operational","Microsoft-Windows-WebAuth/Operational","Microsoft-Windows-WebAuthN/Operational","Microsoft-Windows-Biometrics/Operational","Microsoft-Windows-IdCtrls/Operational","Microsoft-Windows-Crypto-DPAPI/Operational"
-    $global:DebugLogs="Microsoft-Windows-AAD/Analytic","Microsoft-Windows-User Device Registration/Debug"
-    $global:Events = $global:PreTraceEvents + "Microsoft-Windows-AAD/Analytic","Microsoft-Windows-User Device Registration/Debug","System","Application","Microsoft-Windows-Shell-Core/Operational","Microsoft-Windows-Kerberos/Operational","Microsoft-Windows-CertPoleEng/Operational","Microsoft-Windows-Authentication/AuthenticationPolicyFailures-DomainController","Microsoft-Windows-Authentication/ProtectedUser-Client","Microsoft-Windows-Authentication/ProtectedUserFailures-DomainController","Microsoft-Windows-Authentication/ProtectedUserSuccesses-DomainController","Microsoft-Windows-WMI-Activity/Operational","Microsoft-Windows-GroupPolicy/Operational"
-
-    $global:CopyFiles='if (Test-Path "$env:windir\debug\netlogon.log"){Copy-Item "$env:windir\debug\netlogon.log" -Destination "netlogon.log" | Out-Null}',`
-    'if (Test-Path "$env:windir\system32\drivers\etc\hosts"){Copy-Item "$env:windir\system32\drivers\etc\hosts" -Destination "hosts.txt" | Out-Null}',`
-    'if (Test-Path "$env:windir\debug\Netsetup.log"){Copy-Item "$env:windir\debug\Netsetup.log" -Destination "Netsetup.log" | Out-Null}',`
-    'if (Test-Path "$env:windir\system32\Lsass.log"){Copy-Item "$env:windir\system32\Lsass.log" -Destination "Lsass.log" | Out-Null}'
-
-    $global:RegKeys = 'ipconfig /all > ipconfig-all.txt',`
-    'dsregcmd /status > dsregcmd-status.txt',`
-    'netstat -nao > netstat-nao.txt',`
-    'route print > route-print.txt',`
-    'net start > services-running.txt',`
-    'tasklist > tasklist.txt',`
-    'netsh winhttp show proxy > netsh-winhttp-proxy.txt',`
-    'wmic qfe list full /format:htable > Patches.htm',`
-    'GPResult /f /h GPResult.html',`
-    'regedit /e CloudDomainJoin.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\CloudDomainJoin',`
-    'regedit /e Lsa.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa',`
-    'regedit /e Netlogon.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netlogon',`
-    'regedit /e Schannel.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL',`
-    'regedit /e Winlogon.txt HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon',`
-    'regedit /e Winlogon-current-control-set.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Winlogon',`
-    'regedit /e IdentityStore.txt HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\IdentityStore',`
-    'regedit /e WorkplaceJoin-windows.txt HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WorkplaceJoin',`
-    'regedit /e WorkplaceJoin-control.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\WorkplaceJoin',`
-    'regedit /e SCP-client-side.txt HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\CDJ\AAD',`
-    'regedit /e WPJ-info.txt HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AAD'    $global:AADExt='set > set.txt',`
-    'sc query  > services-config.txt',`    'md AADExtention',`    'curl -H Metadata:true http://169.254.169.254/metadata/identity/info?api-version=2018-02-01 > .\AADExtention\metadata.txt 2>&0',`    'curl https://login.microsoftonline.com/ -D - > .\AADExtention\login.microsoftonline.com.txt 2>&0',`    'curl https://enterpriseregistration.windows.net/ -D - > .\AADExtention\enterpriseregistration.windows.net.txt 2>&0',`    'curl https://device.login.microsoftonline.com/ -D - > .\AADExtention\device.login.microsoftonline.com.txt 2>&0',`    'curl https://pas.windows.net/ -D - > .\AADExtention\pas.windows.net.txt 2>&0',`    'xcopy C:\WindowsAzure\Logs\Plugins\Microsoft.Azure.ActiveDirectory.AADLoginForWindows .\AADExtention\Microsoft.Azure.ActiveDirectory.AADLoginForWindows /E /H /C /I 2>&0 > null'        $WebAuth='{2A3C6602-411E-4DC6-B138-EA19D64F5BBA},0xFFFF,0xff',`
+    $WebAuth='{2A3C6602-411E-4DC6-B138-EA19D64F5BBA},0xFFFF,0xff',`
     '{EF98103D-8D3A-4BEF-9DF2-2156563E64FA},0xFFFF,0xff',`
     '{FB6A424F-B5D6-4329-B9B5-A975B3A93EAD},0x000003FF,0xff',`
     '{D93FE84A-795E-4608-80EC-CE29A96C8658},0x7FFFFFFF,0xff',`
@@ -1032,7 +1003,6 @@ Function StartLogCollection{
 
     #Create DSRegToolLogs folder.
     Write-Host "Creating DSRegToolLogs folder under $pwd" -ForegroundColor Yellow
-    $global:LogsPath=$pwd.Path+"\DSRegToolLogs"
     if (!(Test-Path $global:LogsPath)){
         New-Item -itemType Directory -Path $global:LogsPath -Force | Out-Null
     }else{
@@ -1065,6 +1035,39 @@ Function StartLogCollection{
 }
 
 Function LogsCollection{
+    $global:LogsPath=$pwd.Path+"\DSRegToolLogs"
+    $global:PreTraceEvents = "Microsoft-Windows-AAD/Operational","Microsoft-Windows-User Device Registration/Admin","Microsoft-Windows-CAPI2/Operational","Microsoft-Windows-HelloForBusiness/Operational","Microsoft-Windows-LiveId/Operational","Microsoft-Windows-User Control Panel/Operational","Microsoft-Windows-WebAuth/Operational","Microsoft-Windows-WebAuthN/Operational","Microsoft-Windows-Biometrics/Operational","Microsoft-Windows-IdCtrls/Operational","Microsoft-Windows-Crypto-DPAPI/Operational"
+    $global:DebugLogs="Microsoft-Windows-AAD/Analytic","Microsoft-Windows-User Device Registration/Debug"
+    $global:Events = $global:PreTraceEvents + "Microsoft-Windows-AAD/Analytic","Microsoft-Windows-User Device Registration/Debug","System","Application","Microsoft-Windows-Shell-Core/Operational","Microsoft-Windows-Kerberos/Operational","Microsoft-Windows-CertPoleEng/Operational","Microsoft-Windows-Authentication/AuthenticationPolicyFailures-DomainController","Microsoft-Windows-Authentication/ProtectedUser-Client","Microsoft-Windows-Authentication/ProtectedUserFailures-DomainController","Microsoft-Windows-Authentication/ProtectedUserSuccesses-DomainController","Microsoft-Windows-WMI-Activity/Operational","Microsoft-Windows-GroupPolicy/Operational"
+
+    $global:CopyFiles='if (Test-Path "$env:windir\debug\netlogon.log"){Copy-Item "$env:windir\debug\netlogon.log" -Destination "netlogon.log" | Out-Null}',`
+    'if (Test-Path "$env:windir\system32\drivers\etc\hosts"){Copy-Item "$env:windir\system32\drivers\etc\hosts" -Destination "hosts.txt" | Out-Null}',`
+    'if (Test-Path "$env:windir\debug\Netsetup.log"){Copy-Item "$env:windir\debug\Netsetup.log" -Destination "Netsetup.log" | Out-Null}',`
+    'if (Test-Path "$env:windir\system32\Lsass.log"){Copy-Item "$env:windir\system32\Lsass.log" -Destination "Lsass.log" | Out-Null}'
+
+    $global:RegKeys = 'ipconfig /all > ipconfig-all.txt',`
+    'dsregcmd /status > dsregcmd-status.txt',`
+    'netstat -nao > netstat-nao.txt',`
+    'route print > route-print.txt',`
+    'net start > services-running.txt',`
+    'tasklist > tasklist.txt',`
+    'netsh winhttp show proxy > netsh-winhttp-proxy.txt',`
+    'wmic qfe list full /format:htable > Patches.htm',`
+    'GPResult /f /h GPResult.html',`
+    'regedit /e CloudDomainJoin.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\CloudDomainJoin',`
+    'regedit /e Lsa.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa',`
+    'regedit /e Netlogon.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netlogon',`
+    'regedit /e Schannel.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL',`
+    'regedit /e Winlogon.txt HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon',`
+    'regedit /e Winlogon-current-control-set.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Winlogon',`
+    'regedit /e IdentityStore.txt HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\IdentityStore',`
+    'regedit /e WorkplaceJoin-windows.txt HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WorkplaceJoin',`
+    'regedit /e WorkplaceJoin-control.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\WorkplaceJoin',`
+    'regedit /e SCP-client-side.txt HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\CDJ\AAD',`
+    'regedit /e WPJ-info.txt HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AAD'
+
+    $global:AADExt='set > set.txt',`
+    'sc query  > services-config.txt',`    'md AADExtention',`    'curl -H Metadata:true http://169.254.169.254/metadata/identity/info?api-version=2018-02-01 > .\AADExtention\metadata.txt 2>&0',`    'curl https://login.microsoftonline.com/ -D - > .\AADExtention\login.microsoftonline.com.txt 2>&0',`    'curl https://enterpriseregistration.windows.net/ -D - > .\AADExtention\enterpriseregistration.windows.net.txt 2>&0',`    'curl https://device.login.microsoftonline.com/ -D - > .\AADExtention\device.login.microsoftonline.com.txt 2>&0',`    'curl https://pas.windows.net/ -D - > .\AADExtention\pas.windows.net.txt 2>&0',`    'xcopy C:\WindowsAzure\Logs\Plugins\Microsoft.Azure.ActiveDirectory.AADLoginForWindows .\AADExtention\Microsoft.Azure.ActiveDirectory.AADLoginForWindows /E /H /C /I 2>&0 > null'
     If ((((New-Object System.Diagnostics.Eventing.Reader.EventlogConfiguration "Microsoft-Windows-AAD/Analytic").IsEnabled) -and ((New-Object System.Diagnostics.Eventing.Reader.EventlogConfiguration "Microsoft-Windows-User Device Registration/Debug").IsEnabled))){        write-Host "Debug logs are enabled, it seems you started log collection." -ForegroundColor Yellow        write-Host "Do you want to continue with current log collection? [Y/N]" -ForegroundColor Yellow        $input=Read-Host "Enter 'Y' to continue, or 'N' to start a new log collection"        While(($input -ne 'y') -AND ($input -ne 'n')){
             $input = Read-Host -Prompt "Invalid input. Please make a correct selection from the above options, and press Enter" 
         }        if($input -eq 'y'){            #Test if DSRegToolLog folder exist            if(Test-Path $global:LogsPath){                #Stop log collection, when repro finished, please press ENTER.                StopLogCollection            }else{                Write-Host "Please locate DSRegToolLog folder/path where you start the tool previously, and start the tool again."            }        }elseif($input -eq 'n'){            #Start log collection from bigning            StartLogCollection            StopLogCollection        }    }else{        #Start log collection from bigning        StartLogCollection        StopLogCollection    }
