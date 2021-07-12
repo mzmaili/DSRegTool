@@ -1141,6 +1141,7 @@ Function LogsCollection{
 
     $global:RegKeys = 'ipconfig /all > ipconfig-all.txt',`
     'dsregcmd /status > dsregcmd-status.txt',`
+    '[environment]::OSVersion | fl * > Winver.txt',`
     'netstat -nao > netstat-nao.txt',`
     'route print > route-print.txt',`
     'net start > services-running.txt',`
