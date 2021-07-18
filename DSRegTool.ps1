@@ -87,7 +87,7 @@ Function Test-DevRegConnectivity($Write){
             $TestConnResult = $TestConnResult + "Connection to login.microsoftonline.com .............. Succeeded."
         }else{
             #Test winInet
-            Write-Log -Message "Connection failed via winHTTP, trying winInet..."
+            If($Write){Write-Log -Message "Connection failed via winHTTP, trying winInet..."}
             $PSScript = "(Invoke-WebRequest -uri 'login.microsoftonline.com' -UseBasicParsing).StatusCode"
             $TestResult = RunPScript -PSScript $PSScript
             if ($TestResult -eq 200){
@@ -113,7 +113,7 @@ Function Test-DevRegConnectivity($Write){
             $TestConnResult = $TestConnResult + "Connection to device.login.microsoftonline.com ......  Succeeded."
         }else{
             #WinInet
-            Write-Log -Message "Connection failed via winHTTP, trying winInet..."
+            If($Write){Write-Log -Message "Connection failed via winHTTP, trying winInet..."}
             $PSScript = "(Invoke-WebRequest -uri 'device.login.microsoftonline.com' -UseBasicParsing).StatusCode"
             $TestResult = RunPScript -PSScript $PSScript
             if ($TestResult -eq 200){
@@ -139,7 +139,7 @@ Function Test-DevRegConnectivity($Write){
             $TestConnResult = $TestConnResult + "Connection to enterpriseregistration.windows.net ..... Succeeded."
         }else{
         #WinInet
-        Write-Log -Message "Connection failed via winHTTP, trying winInet..."
+        If($Write){Write-Log -Message "Connection failed via winHTTP, trying winInet..."}
         $PSScript = "(Invoke-WebRequest -uri 'https://enterpriseregistration.windows.net/$global:TenantName/discover?api-version=1.7' -UseBasicParsing -Headers @{'Accept' = 'application/json'; 'ocp-adrs-client-name' = 'dsreg'; 'ocp-adrs-client-version' = '10'}).StatusCode"
         $TestResult = RunPScript -PSScript $PSScript
         if ($TestResult -eq 200){
@@ -253,9 +253,9 @@ Function CheckPRT{
     $OSVersoin = ([environment]::OSVersion.Version).major
     $OSBuild = ([environment]::OSVersion.Version).Build
     if (($OSVersoin -ge 10) -and ($OSBuild -ge 1511)){
-        Write-Host "Test passed: device has current OS version" -ForegroundColor Green -BackgroundColor Black
-        Write-Log -Message "Test passed: device has current OS version"
-
+        $OSVer = (([environment]::OSVersion).Version).ToString()
+        Write-Host "Test passed: device has current OS version ($OSVer)" -ForegroundColor Green -BackgroundColor Black
+        Write-Log -Message "Test passed: device has current OS version ($OSVer)"
     }else{
         # dsregcmd will not work.
         Write-Host "The device has a Windows down-level OS version" -ForegroundColor Red
@@ -551,8 +551,9 @@ Function WPJTS{
     $OSVersoin = ([environment]::OSVersion.Version).major
     $OSBuild = ([environment]::OSVersion.Version).Build
     if (($OSVersoin -ge 10) -and ($OSBuild -ge 1511)){
-        Write-Host "Test passed: device has current OS version" -ForegroundColor Green -BackgroundColor Black
-        Write-Log -Message "Test passed: device has current OS version"
+        $OSVer = (([environment]::OSVersion).Version).ToString()
+        Write-Host "Test passed: device has current OS version ($OSVer)" -ForegroundColor Green -BackgroundColor Black
+        Write-Log -Message "Test passed: device has current OS version ($OSVer)"
     }else{
         # dsregcmd will not work.
         Write-Host "The device has a Windows down-level OS version" -ForegroundColor Red
@@ -753,9 +754,9 @@ Write-Log -Message "Testing OS version..."
 $OSVersoin = ([environment]::OSVersion.Version).major
 $OSBuild = ([environment]::OSVersion.Version).Build
 if (($OSVersoin -ge 10) -and ($OSBuild -ge 1511)){
-    Write-Host "Test passed: device has current OS version." -ForegroundColor Green -BackgroundColor Black
-    Write-Log -Message "Test passed: device has current OS version."
-
+    $OSVer = (([environment]::OSVersion).Version).ToString()
+    Write-Host "Test passed: device has current OS version ($OSVer)" -ForegroundColor Green -BackgroundColor Black
+    Write-Log -Message "Test passed: device has current OS version ($OSVer)"
 }else{
     # dsregcmd will not work.
     Write-Host "The device has a Windows down-level OS version." -ForegroundColor Red
@@ -1286,7 +1287,7 @@ Function CollectLog($RunLogs){
     Pop-Location
 }
 
-Function CompressLogsFolder{    $CompressedFile = "DSRegTool_Logs_" + (Get-Date -Format yyyy-dd-MM_hh-mm)    $FolderContent = "$(Join-Path -Path $pwd.Path -ChildPath $CompressedFile).zip"    Add-Type -Assembly "System.IO.Compression.FileSystem"    [System.IO.Compression.ZipFile]::CreateFromDirectory($global:LogsPath, $FolderContent)
+Function CompressLogsFolder{    #$CompressedFile = "DSRegTool_Logs_" + (Get-Date -Format yyyy-MM-dd_HH-mm)    $CompressedFile = "DSRegTool_Logs_" + (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd_HH-mm')    $FolderContent = "$(Join-Path -Path $pwd.Path -ChildPath $CompressedFile).zip"    Add-Type -Assembly "System.IO.Compression.FileSystem"    [System.IO.Compression.ZipFile]::CreateFromDirectory($global:LogsPath, $FolderContent)
     Write-host "Compressed file is ready in $FolderContent" -ForegroundColor Yellow
     # Cleanup the Temporary Folder (if error retain the temp files)
     if(Test-Path -Path $pwd.Path){
@@ -1396,11 +1397,19 @@ Function StartLogCollection{
     if (!(Test-Path $global:LogsPath)){
         New-Item -itemType Directory -Path $global:LogsPath -Force | Out-Null
         Write-Log -Message "Log collection has started" -logfile "$global:LogsPath\Log.log"
+        $msg="Log collection started on device name: " + (Get-Childitem env:computername).value
+        Write-Log -Message $msg -logfile "$global:LogsPath\Log.log"
+        $msg="Log collection started by user name: " + (whoami) +", UPN: "+(whoami /upn)
+        Write-Log -Message $msg -logfile "$global:LogsPath\Log.log"
         Write-Log -Message "DSRegToolLogs folder created under $pwd" -logfile "$global:LogsPath\Log.log"
     }else{
         Remove-Item -Path $global:LogsPath -Force -Recurse | Out-Null
         New-Item -itemType Directory -Path $global:LogsPath -Force | Out-Null
         Write-Log -Message "Clear old DSRegToolLogs folder" -logfile "$global:LogsPath\Log.log"
+        $msg="Log collection started on device name: " + (Get-Childitem env:computername).value
+        Write-Log -Message $msg -logfile "$global:LogsPath\Log.log"
+        $msg="Log collection started by user name: " + (whoami) +", UPN: "+(whoami /upn)
+        Write-Log -Message $msg -logfile "$global:LogsPath\Log.log"
         Write-Log -Message "DSRegToolLogs folder created under $pwd" -logfile "$global:LogsPath\Log.log"
     }
 
@@ -1425,7 +1434,7 @@ Function StartLogCollection{
         netsh trace start persistent=yes traceFile=.\DSRegToolLogs\Netmon.etl capture=yes maxsize=1024| Out-Null
         Write-Log -Message "Network trace started..." -logfile "$global:LogsPath\Log.log"
     }
-    ''    ''    Write-Host "Log collection has started, please start repro the issue..." -ForegroundColor Yellow    Write-Log -Message "Log collection has started, please start repro the issue..." -logfile "$global:LogsPath\Log.log"    ''}Function StopLogCollection{    Write-Host "When repro finished, please press ENTER to stop log collection..." -ForegroundColor Green -NoNewline    Write-Log -Message "When repro finished, please press ENTER to stop log collection..." -logfile "$global:LogsPath\Log.log"    Read-Host     #Disable debug and analytic logs:    DisableDebugEvents $global:DebugLogs    #Collect logs    Write-Host "Log collection has been stopped, please wait until we gather all files..." -ForegroundColor Yellow    Write-Log -Message "Log collection has been stopped, please wait until we gather all files..." -logfile "$global:LogsPath\Log.log"    Write-Host "Exporting event viewer logs..." -ForegroundColor Yellow    write-log -Message "Exporting event viewer logs..." -logfile "$global:LogsPath\Log.log"    ExportEventViewerLogs $global:Events $global:LogsPath    Write-Host "Copying files..." -ForegroundColor Yellow    write-log -Message "Copying files..." -logfile "$global:LogsPath\Log.log"    CollectLog $global:CopyFiles    Write-Host "Exporting registry keys..." -ForegroundColor Yellow    write-log -Message "Exporting registry keys..." -logfile "$global:LogsPath\Log.log"    RunPScript -PSScript "dsregcmd /status /debug" | Out-file "$global:LogsPath\dsregcmd-debug.txt"    Write-Log -Message "dsregcmd-debug.txt exported" -logfile "$global:LogsPath\Log.log"    getSCP    getwinHTTPinInet    Test-DevRegConnectivity $false | Out-file "$global:LogsPath\TestDeviceRegConnectivity.txt"    Write-Log -Message "TestDeviceRegConnectivity.txt exported" -logfile "$global:LogsPath\Log.log"    CollectLog $global:RegKeys    CollectLogAADExt $global:AADExt    Write-Host "Stopping network traces..." -ForegroundColor Yellow    Write-Log -Message "Network trace stopped..." -logfile "$global:LogsPath\Log.log"    LogmanStop "WebAuth"    Write-Log -Message "WebAuth log collection stopped..." -logfile "$global:LogsPath\Log.log"    LogmanStop "LSA"    Write-Log -Message "LSA log collection stopped..." -logfile "$global:LogsPath\Log.log"    LogmanStop "Ntlm_CredSSP"    Write-Log -Message "Ntlm_CredSSP log collection stopped..." -logfile "$global:LogsPath\Log.log"    LogmanStop "Kerberos"    Write-Log -Message "Kerberos log collection stopped..." -logfile "$global:LogsPath\Log.log"    netsh trace stop | Out-Null    Write-Log -Message "Log collection completed successfully"    Write-Host "Compressing collected logs..." -ForegroundColor Yellow    if (Test-Path "$pwd\DSRegTool.log"){
+    ''    ''    Write-Host "Log collection has started, please start repro the issue..." -ForegroundColor Yellow    Write-Log -Message "Log collection has started, please start repro the issue..." -logfile "$global:LogsPath\Log.log"    ''}Function StopLogCollection{    Write-Host "When repro finished, please press ENTER to stop log collection..." -ForegroundColor Green -NoNewline    Write-Log -Message "When repro finished, please press ENTER to stop log collection..." -logfile "$global:LogsPath\Log.log"    Read-Host     #Disable debug and analytic logs:    DisableDebugEvents $global:DebugLogs    #Collect logs    Write-Host "Log collection has been stopped, please wait until we gather all files..." -ForegroundColor Yellow    Write-Log -Message "Log collection has been stopped, please wait until we gather all files..." -logfile "$global:LogsPath\Log.log"    Write-Host "Copying files..." -ForegroundColor Yellow    write-log -Message "Copying files..." -logfile "$global:LogsPath\Log.log"    CollectLog $global:CopyFiles    Write-Host "Exporting registry keys..." -ForegroundColor Yellow    write-log -Message "Exporting registry keys..." -logfile "$global:LogsPath\Log.log"    CollectLog $global:RegKeys    Write-Host "Exporting event viewer logs..." -ForegroundColor Yellow    write-log -Message "Exporting event viewer logs..." -logfile "$global:LogsPath\Log.log"    ExportEventViewerLogs $global:Events $global:LogsPath    RunPScript -PSScript "dsregcmd /status /debug" | Out-file "$global:LogsPath\dsregcmd-debug.txt"    Write-Log -Message "dsregcmd-debug.txt exported" -logfile "$global:LogsPath\Log.log"    getSCP    getwinHTTPinInet    CollectLogAADExt $global:AADExt    Write-Host "Stopping network traces, this may take few minutes..." -ForegroundColor Yellow    Write-Log -Message "Stopping network traces, this may take few minutes..." -logfile "$global:LogsPath\Log.log"    LogmanStop "WebAuth"    Write-Log -Message "WebAuth log collection stopped..." -logfile "$global:LogsPath\Log.log"    LogmanStop "LSA"    Write-Log -Message "LSA log collection stopped..." -logfile "$global:LogsPath\Log.log"    LogmanStop "Ntlm_CredSSP"    Write-Log -Message "Ntlm_CredSSP log collection stopped..." -logfile "$global:LogsPath\Log.log"    LogmanStop "Kerberos"    Write-Log -Message "Kerberos log collection stopped..." -logfile "$global:LogsPath\Log.log"    netsh trace stop | Out-Null    Test-DevRegConnectivity $false | Out-file "$global:LogsPath\TestDeviceRegConnectivity.txt"    Write-Log -Message "TestDeviceRegConnectivity.txt exported" -logfile "$global:LogsPath\Log.log"    Write-Log -Message "Log collection completed successfully"    Write-Host "Compressing collected logs..." -ForegroundColor Yellow    if (Test-Path "$pwd\DSRegTool.log"){
         Copy-Item "$pwd\DSRegTool.log" -Destination "$global:LogsPath\DSRegTool.log" | Out-Null
         Write-Log -Message "DSRegTool.log has copied" -logfile "$global:LogsPath\Log.log"
     }
@@ -2621,9 +2630,9 @@ Write-Log -Message "Testing OS version..."
 $OSVersoin = ([environment]::OSVersion.Version).major
 $OSBuild = ([environment]::OSVersion.Version).Build
 if (($OSVersoin -ge 10) -and ($OSBuild -ge 1511)){
-    Write-Host "Test passed: device has current OS version." -ForegroundColor Green -BackgroundColor Black
-    Write-Log -Message "Test passed: device has current OS version."
-
+    $OSVer = (([environment]::OSVersion).Version).ToString()
+    Write-Host "Test passed: device has current OS version ($OSVer)" -ForegroundColor Green -BackgroundColor Black
+    Write-Log -Message "Test passed: device has current OS version ($OSVer)"
 }else{
     # dsregcmd will not work.
     Write-Host "The device has a Windows down-level OS version." -ForegroundColor Red
@@ -2761,6 +2770,9 @@ if ($AADJ -ne "YES"){
         ''
         ''
         exit
+    }else{
+        Write-Host "Test passed: Device is able to communicate with MS endpoints successfully under system context" -ForegroundColor Green -BackgroundColor Black
+        Write-Log -Message "Test passed: Device is able to communicate with MS endpoints successfully under system context"
     }
 
     ###conn
@@ -3155,6 +3167,10 @@ if($Error[0].Exception.Message -ne $null){
 
 Add-Content ".\DSRegTool.log" -Value "==========================================================" -ErrorAction SilentlyContinue
 Write-Log -Message "DSRegTool 2.5 has started"
+$msg="DSRegTool started on device name: " + (Get-Childitem env:computername).value
+Write-Log -Message $msg
+$msg="DSRegTool started by user name: " + (whoami) +", UPN: "+(whoami /upn)
+Write-Log -Message $msg
 $Num =''
 $Num = Read-Host -Prompt "Please make a selection, and press Enter" 
 
