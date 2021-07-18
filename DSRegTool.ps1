@@ -190,7 +190,8 @@ Function Write-Log{
     if ($Message -eq " "){
         Add-Content $logfile -Value " " -ErrorAction SilentlyContinue
     }else{
-        $Date= Get-Date -Format 'yyyy-dd-MM hh:mm:ss'
+        #$Date= Get-Date -Format 'yyyy-MM-dd HH:mm:ss.fff'
+        $Date = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss.fff')
         Add-Content $logfile -Value "[$date] [$Level] $Message" -ErrorAction SilentlyContinue
     }
 }
@@ -1233,18 +1234,23 @@ Function getwinHTTPinInet{
 }
 
 Function getSCP{
+    $ErrorActionPreference= 'silentlycontinue'
     #Check SCP-config-partition
     $Root = [ADSI]"LDAP://RootDSE"
     $ConfigurationName = $Root.rootDomainNamingContext
-    $scp = New-Object System.DirectoryServices.DirectoryEntry;
-    $scp.Path = "LDAP://CN=62a0ff2e-97b9-4513-943f-0d221bd30080,CN=Device Registration Configuration,CN=Services,CN=Configuration," + $ConfigurationName;
-    if ($scp.Keywords -ne $null){
-        Add-Content "$global:LogsPath\SCP-config-partition.txt" -Value $scp.Keywords -ErrorAction SilentlyContinue
-        $TN = $scp.Keywords | Select-String azureADName
-        $TN = ($TN.tostring() -split ":")[1].trim()
-        $global:TenantName = $TN
+    if (($ConfigurationName.length) -eq 0){
+        Add-Content "$global:LogsPath\SCP-config-partition.txt" -Value "Not able to read Service Connection Point from configuration partition" -ErrorAction SilentlyContinue
     }else{
-        Add-Content "$global:LogsPath\SCP-config-partition.txt" -Value "Service Connection Point is not configured in configurationconfiguration partition" -ErrorAction SilentlyContinue
+        $scp = New-Object System.DirectoryServices.DirectoryEntry;
+        $scp.Path = "LDAP://CN=62a0ff2e-97b9-4513-943f-0d221bd30080,CN=Device Registration Configuration,CN=Services,CN=Configuration," + $ConfigurationName;
+        if ($scp.Keywords -ne $null){
+            Add-Content "$global:LogsPath\SCP-config-partition.txt" -Value $scp.Keywords -ErrorAction SilentlyContinue
+            $TN = $scp.Keywords | Select-String azureADName
+            $TN = ($TN.tostring() -split ":")[1].trim()
+            $global:TenantName = $TN
+        }else{
+            Add-Content "$global:LogsPath\SCP-config-partition.txt" -Value "Service Connection Point is not configured in configurationconfiguration partition" -ErrorAction SilentlyContinue
+        }
     }
     #SCP-client-side
     $Reg=Get-ItemProperty -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CDJ\AAD -ErrorAction SilentlyContinue
@@ -3111,9 +3117,9 @@ $global:enterprise=$false
 $global:ProxyServer=""
 
 cls
-'=============================================================='
+'=================================================================='
 Write-Host '        Device Registration Troubleshooter Tool          ' -ForegroundColor Green 
-'=============================================================='
+'=================================================================='
 ''
 Write-Host "Please provide any feedback, comment or suggestion" -ForegroundColor Yellow
 Write-Host
@@ -3133,7 +3139,7 @@ Write-Host "Enter (7) to collect the logs" -ForegroundColor Green
 ''
 Write-Host "Enter (Q) to Quit" -ForegroundColor Green
 ''
-Add-Content ".\DSRegTool.log" -Value "======================================================" -ErrorAction SilentlyContinue
+Add-Content ".\DSRegTool.log" -Value "==========================================================" -ErrorAction SilentlyContinue
 if($Error[0].Exception.Message -ne $null){
     if($Error[0].Exception.Message.Contains('denied')){
         Write-Host "Was not able to create log file." -ForegroundColor Yellow
@@ -3147,7 +3153,7 @@ if($Error[0].Exception.Message -ne $null){
     ''
 }
 
-Add-Content ".\DSRegTool.log" -Value "======================================================" -ErrorAction SilentlyContinue
+Add-Content ".\DSRegTool.log" -Value "==========================================================" -ErrorAction SilentlyContinue
 Write-Log -Message "DSRegTool 2.5 has started"
 $Num =''
 $Num = Read-Host -Prompt "Please make a selection, and press Enter" 
