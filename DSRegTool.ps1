@@ -2099,7 +2099,7 @@ Function NewFunAAD{
     Write-Host "Checking Key provider..." -ForegroundColor Yellow
     Write-Log -Message "Checking Key provider..."
     #Checking the KeyProvider:
-    $KeyProvider = $DSReg | Select-String KeyProvider
+    $KeyProvider = $DSReg | Select-String KeyProvider | Select-Object -first 1
     $KeyProvider = ($KeyProvider.tostring() -split ":")[1].trim()
     if (($KeyProvider -ne "Microsoft Platform Crypto Provider") -and ($KeyProvider -ne "Microsoft Software Key Storage Provider")){
         Write-Host "The KeyProvider is not configured correctly" -ForegroundColor Red
@@ -2121,9 +2121,9 @@ Function NewFunAAD{
     # Check other values.
 
     #Checking the certificate:
-    $DID = $DSReg | Select-String DeviceId
+    $DID = $DSReg | Select-String DeviceId | Select-Object -first 1
     $DID = ($DID.ToString() -split ":")[1].Trim()
-    $DTP = $DSReg | Select-String Thumbprint
+    $DTP = $DSReg | Select-String Thumbprint | Select-Object -first 1
     $DTP = ($DTP.ToString() -split ":")[1].Trim()
     ''
     Write-Host "Checking the device certificate configuration..." -ForegroundColor Yellow
