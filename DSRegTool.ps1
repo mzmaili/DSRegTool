@@ -31,6 +31,14 @@
 
 #>
 
+Function DSRegToolStart{
+    Write-Host "DSRegTool 2.5 has started" -ForegroundColor Yellow
+    $msg="Device Name : " + (Get-Childitem env:computername).value
+    Write-Host $msg  -ForegroundColor Yellow
+    $msg="User Account: " + (whoami) +", UPN: "+(whoami /upn)
+    Write-Host $msg  -ForegroundColor Yellow
+}
+
 Function Test-DevRegConnectivity($Write){
     $winInetProxy=$false
     $TestConnResult=@()
@@ -1222,7 +1230,8 @@ Function getwinHTTPinInet{
     #ExportwinInet proxy
     $winInetOutput=""
     $winInet=RunPScript -PSScript "Get-ItemProperty -Path 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings'"
-    $winInet | Out-File "$global:LogsPath\winInet-regkey.txt"
+    $winInet | Out-File "$global:LogsPath\winInet-system-regkey.txt"
+    Write-Log -Message "winInet-system-regkey.txt exported" -logfile "$global:LogsPath\Log.log"
     if($winInet.ProxyEnable){$winInetOutput+= "    Proxy Enabled : Yes`n"}else{$winInetOutput+= "    Proxy Enabled : No`n"}
     $winInetProxy="Proxy Server List : "+$winInet.ProxyServer
     $winInetOutput+= $winInetProxy+"`n"
@@ -1230,8 +1239,23 @@ Function getwinHTTPinInet{
     $winInetOutput+=$winInetBypass+"`n"
     $winInetAutoConfigURL="    AutoConfigURL : "+$winInet.AutoConfigURL
     $winInetOutput+= $winInetAutoConfigURL
-    $winInetOutput | Out-file "$global:LogsPath\winInet.txt"
-    Write-Log -Message "winInet.txt exported" -logfile "$global:LogsPath\Log.log"
+    $winInetOutput | Out-file "$global:LogsPath\winInet-system.txt"
+    Write-Log -Message "winInet-system.txt exported" -logfile "$global:LogsPath\Log.log"
+
+    #winInet_User
+    $winInetOutput=""
+    $winInet=Get-ItemProperty -Path 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings'
+    $winInet | Out-File "$global:LogsPath\winInet-user-regkey.txt"
+    Write-Log -Message "winInet-user-regkey.txt exported" -logfile "$global:LogsPath\Log.log"
+    if($winInet.ProxyEnable){$winInetOutput+= "    Proxy Enabled : Yes`n"}else{$winInetOutput+= "    Proxy Enabled : No`n"}
+    $winInetProxy="Proxy Server List : "+$winInet.ProxyServer
+    $winInetOutput+= $winInetProxy+"`n"
+    $winInetBypass="Proxy Bypass List : "+$winInet.ProxyOverride
+    $winInetOutput+=$winInetBypass+"`n"
+    $winInetAutoConfigURL="    AutoConfigURL : "+$winInet.AutoConfigURL
+    $winInetOutput+= $winInetAutoConfigURL
+    $winInetOutput | Out-file "$global:LogsPath\winInet-user.txt"
+    Write-Log -Message "winInet-user.txt exported" -logfile "$global:LogsPath\Log.log"
 }
 
 Function getSCP{
@@ -1285,6 +1309,20 @@ Function CollectLogAADExt($RunLogs){
 Function CollectLog($RunLogs){
     Push-Location $global:LogsPath    ForEach ($RunLog in $RunLogs){		powershell.exe $RunLog        Write-Log -Message $RunLog -logfile "$global:LogsPath\Log.log"    }
     Pop-Location
+}
+
+Function StartCopyFile($Source, $Destination){
+    if (Test-Path $Source){
+        Copy-Item $Source -Destination $global:LogsPath\$Destination
+        Write-Log -Message "$Destination has copied successfully" -logfile $global:LogsPath\Log.log
+    }
+}
+
+Function CopyFiles{
+    StartCopyFile "$env:windir\debug\netlogon.log" "netlogon.log"
+    StartCopyFile "$env:windir\system32\drivers\etc\hosts" "hosts.txt"
+    StartCopyFile "$env:windir\debug\Netsetup.log" "Netsetup.log"
+    StartCopyFile "$env:windir\system32\Lsass.log" "Lsass.log"
 }
 
 Function CompressLogsFolder{    #$CompressedFile = "DSRegTool_Logs_" + (Get-Date -Format yyyy-MM-dd_HH-mm)    $CompressedFile = "DSRegTool_Logs_" + (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd_HH-mm')    $FolderContent = "$(Join-Path -Path $pwd.Path -ChildPath $CompressedFile).zip"    Add-Type -Assembly "System.IO.Compression.FileSystem"    [System.IO.Compression.ZipFile]::CreateFromDirectory($global:LogsPath, $FolderContent)
@@ -1434,7 +1472,7 @@ Function StartLogCollection{
         netsh trace start persistent=yes traceFile=.\DSRegToolLogs\Netmon.etl capture=yes maxsize=1024| Out-Null
         Write-Log -Message "Network trace started..." -logfile "$global:LogsPath\Log.log"
     }
-    ''    ''    Write-Host "Log collection has started, please start repro the issue..." -ForegroundColor Yellow    Write-Log -Message "Log collection has started, please start repro the issue..." -logfile "$global:LogsPath\Log.log"    ''}Function StopLogCollection{    Write-Host "When repro finished, please press ENTER to stop log collection..." -ForegroundColor Green -NoNewline    Write-Log -Message "When repro finished, please press ENTER to stop log collection..." -logfile "$global:LogsPath\Log.log"    Read-Host     #Disable debug and analytic logs:    DisableDebugEvents $global:DebugLogs    #Collect logs    Write-Host "Log collection has been stopped, please wait until we gather all files..." -ForegroundColor Yellow    Write-Log -Message "Log collection has been stopped, please wait until we gather all files..." -logfile "$global:LogsPath\Log.log"    Write-Host "Copying files..." -ForegroundColor Yellow    write-log -Message "Copying files..." -logfile "$global:LogsPath\Log.log"    CollectLog $global:CopyFiles    Write-Host "Exporting registry keys..." -ForegroundColor Yellow    write-log -Message "Exporting registry keys..." -logfile "$global:LogsPath\Log.log"    CollectLog $global:RegKeys    Write-Host "Exporting event viewer logs..." -ForegroundColor Yellow    write-log -Message "Exporting event viewer logs..." -logfile "$global:LogsPath\Log.log"    ExportEventViewerLogs $global:Events $global:LogsPath    RunPScript -PSScript "dsregcmd /status /debug" | Out-file "$global:LogsPath\dsregcmd-debug.txt"    Write-Log -Message "dsregcmd-debug.txt exported" -logfile "$global:LogsPath\Log.log"    getSCP    getwinHTTPinInet    CollectLogAADExt $global:AADExt    Write-Host "Stopping network traces, this may take few minutes..." -ForegroundColor Yellow    Write-Log -Message "Stopping network traces, this may take few minutes..." -logfile "$global:LogsPath\Log.log"    LogmanStop "WebAuth"    Write-Log -Message "WebAuth log collection stopped..." -logfile "$global:LogsPath\Log.log"    LogmanStop "LSA"    Write-Log -Message "LSA log collection stopped..." -logfile "$global:LogsPath\Log.log"    LogmanStop "Ntlm_CredSSP"    Write-Log -Message "Ntlm_CredSSP log collection stopped..." -logfile "$global:LogsPath\Log.log"    LogmanStop "Kerberos"    Write-Log -Message "Kerberos log collection stopped..." -logfile "$global:LogsPath\Log.log"    netsh trace stop | Out-Null    Test-DevRegConnectivity $false | Out-file "$global:LogsPath\TestDeviceRegConnectivity.txt"    Write-Log -Message "TestDeviceRegConnectivity.txt exported" -logfile "$global:LogsPath\Log.log"    Write-Log -Message "Log collection completed successfully"    Write-Host "Compressing collected logs..." -ForegroundColor Yellow    if (Test-Path "$pwd\DSRegTool.log"){
+    ''    ''    Write-Host "Log collection has started, please start repro the issue..." -ForegroundColor Yellow    Write-Log -Message "Log collection has started, please start repro the issue..." -logfile "$global:LogsPath\Log.log"    ''}Function StopLogCollection{    Write-Host "When repro finished, please press ENTER to stop log collection..." -ForegroundColor Green -NoNewline    Write-Log -Message "When repro finished, please press ENTER to stop log collection..." -logfile "$global:LogsPath\Log.log"    Read-Host     #Disable debug and analytic logs:    DisableDebugEvents $global:DebugLogs    #Collect logs    Write-Host "Log collection has been stopped, please wait until we gather all files..." -ForegroundColor Yellow    Write-Log -Message "Log collection has been stopped, please wait until we gather all files..." -logfile "$global:LogsPath\Log.log"    Write-Host "Copying files..." -ForegroundColor Yellow    write-log -Message "Copying files..." -logfile "$global:LogsPath\Log.log"    CopyFiles    Write-Host "Exporting registry keys..." -ForegroundColor Yellow    write-log -Message "Exporting registry keys..." -logfile "$global:LogsPath\Log.log"    CollectLog $global:RegKeys    Write-Host "Exporting event viewer logs..." -ForegroundColor Yellow    CollectAdditionalLogs    write-log -Message "Exporting event viewer logs..." -logfile "$global:LogsPath\Log.log"    ExportEventViewerLogs $global:Events $global:LogsPath    RunPScript -PSScript "dsregcmd /status /debug" | Out-file "$global:LogsPath\dsregcmd-debug.txt"    Write-Log -Message "dsregcmd-debug.txt exported" -logfile "$global:LogsPath\Log.log"    getSCP    getwinHTTPinInet    CollectLogAADExt $global:AADExt    Write-Host "Stopping network traces, this may take few minutes..." -ForegroundColor Yellow    Write-Log -Message "Stopping network traces, this may take few minutes..." -logfile "$global:LogsPath\Log.log"    LogmanStop "WebAuth"    Write-Log -Message "WebAuth log collection stopped..." -logfile "$global:LogsPath\Log.log"    LogmanStop "LSA"    Write-Log -Message "LSA log collection stopped..." -logfile "$global:LogsPath\Log.log"    LogmanStop "Ntlm_CredSSP"    Write-Log -Message "Ntlm_CredSSP log collection stopped..." -logfile "$global:LogsPath\Log.log"    LogmanStop "Kerberos"    Write-Log -Message "Kerberos log collection stopped..." -logfile "$global:LogsPath\Log.log"    netsh trace stop | Out-Null    Test-DevRegConnectivity $false | Out-file "$global:LogsPath\TestDeviceRegConnectivity.txt"    Write-Log -Message "TestDeviceRegConnectivity.txt exported" -logfile "$global:LogsPath\Log.log"    Write-Log -Message "Log collection completed successfully"    Write-Host "Compressing collected logs..." -ForegroundColor Yellow    if (Test-Path "$pwd\DSRegTool.log"){
         Copy-Item "$pwd\DSRegTool.log" -Destination "$global:LogsPath\DSRegTool.log" | Out-Null
         Write-Log -Message "DSRegTool.log has copied" -logfile "$global:LogsPath\Log.log"
     }
@@ -1446,16 +1484,18 @@ Function StartLogCollection{
     ''
 }
 
+Function CollectAdditionalLogs{
+    $ErrorActionPreference= 'silentlycontinue'
+    ([adsisearcher]"(&(name=$env:computername)(objectClass=computer))").findall().path | Out-File "$global:LogsPath\OU.txt"
+    (new-object guid(,(([ADSI](([adsisearcher]"(&(objectCategory=computer)(objectClass=computer)(cn=$env:COMPUTERNAME))").findall().path)).ObjectGuid)[0])).Guid | Out-File "$global:LogsPath\GUID.txt"
+    (schtasks.exe /query /v 2>&1) | Out-File "$global:LogsPath\Task-Scheduler.txt"
+}
+
 Function LogsCollection{
     $global:LogsPath=$pwd.Path+"\DSRegToolLogs"
     $global:PreTraceEvents = "Microsoft-Windows-AAD/Operational","Microsoft-Windows-User Device Registration/Admin","Microsoft-Windows-CAPI2/Operational","Microsoft-Windows-HelloForBusiness/Operational","Microsoft-Windows-LiveId/Operational","Microsoft-Windows-User Control Panel/Operational","Microsoft-Windows-WebAuth/Operational","Microsoft-Windows-WebAuthN/Operational","Microsoft-Windows-Biometrics/Operational","Microsoft-Windows-IdCtrls/Operational","Microsoft-Windows-Crypto-DPAPI/Operational"
     $global:DebugLogs="Microsoft-Windows-AAD/Analytic","Microsoft-Windows-User Device Registration/Debug"
     $global:Events = $global:PreTraceEvents + "Microsoft-Windows-AAD/Analytic","Microsoft-Windows-User Device Registration/Debug","System","Application","Microsoft-Windows-Shell-Core/Operational","Microsoft-Windows-Kerberos/Operational","Microsoft-Windows-CertPoleEng/Operational","Microsoft-Windows-Authentication/AuthenticationPolicyFailures-DomainController","Microsoft-Windows-Authentication/ProtectedUser-Client","Microsoft-Windows-Authentication/ProtectedUserFailures-DomainController","Microsoft-Windows-Authentication/ProtectedUserSuccesses-DomainController","Microsoft-Windows-WMI-Activity/Operational","Microsoft-Windows-GroupPolicy/Operational"
-
-    $global:CopyFiles='if (Test-Path "$env:windir\debug\netlogon.log"){Copy-Item "$env:windir\debug\netlogon.log" -Destination "netlogon.log" | Out-Null}',`
-    'if (Test-Path "$env:windir\system32\drivers\etc\hosts"){Copy-Item "$env:windir\system32\drivers\etc\hosts" -Destination "hosts.txt" | Out-Null}',`
-    'if (Test-Path "$env:windir\debug\Netsetup.log"){Copy-Item "$env:windir\debug\Netsetup.log" -Destination "Netsetup.log" | Out-Null}',`
-    'if (Test-Path "$env:windir\system32\Lsass.log"){Copy-Item "$env:windir\system32\Lsass.log" -Destination "Lsass.log" | Out-Null}'
 
     $global:RegKeys = 'ipconfig /all > ipconfig-all.txt',`
     'dsregcmd /status > dsregcmd-status.txt',`
@@ -1466,7 +1506,6 @@ Function LogsCollection{
     'tasklist > tasklist.txt',`
     'wmic qfe list full /format:htable > Patches.htm',`
     'GPResult /f /h GPResult.html',`
-    '(schtasks.exe /query /v 2>&1) | Out-File Task-Scheduler.txt',`
     'regedit /e CloudDomainJoin.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\CloudDomainJoin',`
     'regedit /e Lsa.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa',`
     'regedit /e Netlogon.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netlogon',`
@@ -3129,9 +3168,9 @@ $global:enterprise=$false
 $global:ProxyServer=""
 
 cls
-'=================================================================='
-Write-Host '        Device Registration Troubleshooter Tool          ' -ForegroundColor Green 
-'=================================================================='
+'==========================================================='
+Write-Host '          Device Registration Troubleshooter Tool          ' -ForegroundColor Green 
+'==========================================================='
 ''
 Write-Host "Please provide any feedback, comment or suggestion" -ForegroundColor Yellow
 Write-Host
@@ -3164,13 +3203,13 @@ if($Error[0].Exception.Message -ne $null){
     Write-Host "DSRegTool log file has been created." -ForegroundColor Yellow -BackgroundColor black
     ''
 }
-
 Add-Content ".\DSRegTool.log" -Value "==========================================================" -ErrorAction SilentlyContinue
 Write-Log -Message "DSRegTool 2.5 has started"
-$msg="DSRegTool started on device name: " + (Get-Childitem env:computername).value
+$msg="Device Name : " + (Get-Childitem env:computername).value
 Write-Log -Message $msg
-$msg="DSRegTool started by user name: " + (whoami) +", UPN: "+(whoami /upn)
+$msg="User Account: " + (whoami) +", UPN: "+(whoami /upn)
 Write-Log -Message $msg
+
 $Num =''
 $Num = Read-Host -Prompt "Please make a selection, and press Enter" 
 
@@ -3185,42 +3224,49 @@ if($Num -eq '1'){
     Write-Host "Troubleshoot Azure AD Register option has been chosen" -BackgroundColor Black
     Write-Log -Message "Troubleshoot Azure AD Register option has been chosen"
     ''
+    DSRegToolStart
     WPJTS
 }elseif($Num -eq '2'){
     ''
     Write-Host "Troubleshoot Azure AD Join device option has been chosen" -BackgroundColor Black
     Write-Log -Message "Troubleshoot Azure AD Join device option has been chosen"
     ''
+    DSRegToolStart
     AADJ
 }elseif($Num -eq '3'){
     ''
     Write-Host "Troubleshoot Hybrid Azure AD Join option has been chosen" -BackgroundColor Black
     Write-Log -Message "Troubleshoot Hybrid Azure AD Join option has been chosen"
     ''
+    DSRegToolStart
     DJ++TS
 }elseif($Num -eq '4'){
     ''
     Write-Host "Verify Service Connection Point (SCP) has been chosen" -BackgroundColor Black
     Write-Log -Message "Verify Service Connection Point (SCP) has been chosen"
     ''
+    DSRegToolStart
     VerifySCP
 }elseif($Num -eq '5'){
     ''
     Write-Host "Verify the health status of the device option has been chosen" -BackgroundColor Black
     Write-Log -Message "Verify the health status of the device option has been chosen"
     ''
+    DSRegToolStart
     DJ++
 }elseif($Num -eq '6'){
     ''
     Write-Host "Verify Primary Refresh Token (PRT) option has been chosen" -BackgroundColor Black
     Write-Log -Message "Verify Primary Refresh Token (PRT) option has been chosen"
     ''
+    DSRegToolStart
     CheckPRT
 }elseif($Num -eq '7'){
     ''
     Write-Host "Collect the logs option has been chosen" -BackgroundColor Black
     Write-Log -Message "Collect the logs option has been chosen"
     ''
+    DSRegToolStart
     LogsCollection
 }else{
     ''
