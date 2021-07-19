@@ -32,6 +32,7 @@
 #>
 
 Function DSRegToolStart{
+    $ErrorActionPreference= 'silentlycontinue'
     Write-Host "DSRegTool 2.5 has started" -ForegroundColor Yellow
     $msg="Device Name : " + (Get-Childitem env:computername).value
     Write-Host $msg  -ForegroundColor Yellow
@@ -163,6 +164,63 @@ Function Test-DevRegConnectivity($Write){
     }
     If ($winInetProxy){$global:ProxyServer="winInet"}
     return $TestConnResult
+}
+
+Function Test-DevRegConnectivity-User{
+    ''
+    Write-Host "Testing Internet Connectivity..." -ForegroundColor Yellow
+    Write-Log -Message "Testing Internet Connectivity..."
+    $InternetConn1=$true
+    $InternetConn2=$true
+    $InternetConn3=$true
+    #$TestResult = (Test-NetConnection -ComputerName login.microsoftonline.com -Port 443).TcpTestSucceeded
+    $TestResult = (Invoke-WebRequest -uri 'login.microsoftonline.com' -UseBasicParsing).StatusCode
+    if ($TestResult -eq 200){
+        Write-Host "Connection to login.microsoftonline.com .............. Succeeded." -ForegroundColor Green
+        Write-Log -Message "Connection to login.microsoftonline.com .............. Succeeded."
+    }else{
+        Write-Host "Connection to login.microsoftonline.com ................. failed." -ForegroundColor Red 
+        Write-Log -Message "Connection to login.microsoftonline.com ................. failed." -Level ERROR
+        $InternetConn1=$false
+    }
+    #$TestResult = (Test-NetConnection -ComputerName device.login.microsoftonline.com -Port 443).TcpTestSucceeded
+    $TestResult = (Invoke-WebRequest -uri 'device.login.microsoftonline.com' -UseBasicParsing).StatusCode
+    if ($TestResult -eq 200){
+        Write-Host "Connection to device.login.microsoftonline.com ......  Succeeded." -ForegroundColor Green 
+        Write-Log -Message "Connection to device.login.microsoftonline.com ......  Succeeded."
+    }else{
+        Write-Host "Connection to device.login.microsoftonline.com .......... failed." -ForegroundColor Red 
+        Write-Log -Message "Connection to device.login.microsoftonline.com .......... failed." -Level ERROR
+        $InternetConn2=$false
+    }
+    #$TestResult = (Test-NetConnection -ComputerName enterpriseregistration.windows.net -Port 443).TcpTestSucceeded
+    $TestResult = (Invoke-WebRequest -uri 'https://enterpriseregistration.windows.net/microsoft.com/discover?api-version=1.7' -UseBasicParsing -Headers @{'Accept' = 'application/json'; 'ocp-adrs-client-name' = 'dsreg'; 'ocp-adrs-client-version' = '10'}).StatusCode
+    if ($TestResult -eq 200){
+        Write-Host "Connection to enterpriseregistration.windows.net ..... Succeeded." -ForegroundColor Green 
+        Write-Log -Message "Connection to enterpriseregistration.windows.net ..... Succeeded."
+    }else{
+        Write-Host "Connection to enterpriseregistration.windows.net ........ failed." -ForegroundColor Red 
+        Write-Log -Message "Connection to enterpriseregistration.windows.net ........ failed." -Level ERROR
+        $InternetConn3=$false
+    }
+
+    if (($InternetConn1 -eq $true) -and ($InternetConn2 -eq $true) -and ($InternetConn3 -and $true) ){
+        Write-Host "Test passed: user is able to communicate with MS endpoints successfully" -ForegroundColor Green -BackgroundColor Black
+        Write-Log -Message "Test passed: user is able to communicate with MS endpoints successfully"
+    }else{
+        Write-Host "Test failed: user is not able to communicate with MS endpoints" -ForegroundColor red -BackgroundColor Black
+        Write-Log -Message "Test failed: user is not able to communicate with MS endpoints" -Level ERROR
+        ''
+        Write-Host "Recommended action: make sure that the user is able to communicate with the above MS endpoints successfully" -ForegroundColor Yellow
+        Write-Log -Message "Recommended action: make sure that the user is able to communicate with the above MS endpoints successfully"
+        ''
+        ''
+        Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+        Write-Log -Message "Script completed successfully."
+        ''
+        ''
+        exit                
+    }
 }
 
 Function CheckePRT{
@@ -579,7 +637,7 @@ Function WPJTS{
     }
 #Check dsregcmd status.
 $DSReg = dsregcmd /status
-
+$hostname=hostname
 #Checking if the device connected to AzureAD
 ''
 Write-Host "Testing if the device is Azure AD Registered..." -ForegroundColor Yellow
@@ -589,60 +647,12 @@ $WPJ = ($WPJ.tostring() -split ":")[1].trim()
 if ($WPJ -ne "YES"){
     #The device is not connected to AAD:
     ### perform WPJ (all other tests should be here)
-    Write-Host "Test failed:" $hostname "device is NOT connected to Azure AD as Azure AD Registered device" -ForegroundColor Red -BackgroundColor Black
+    Write-Host "Test failed:" $hostname "device is NOT connected to Azure AD as Azure AD Registered device" -ForegroundColor Yellow -BackgroundColor Black
     Write-Log -Message "Test failed: $hostname device is NOT connected to Azure AD as Azure AD Registered device"
+    
     #Checking Internet connectivity
-    ''
-    Write-Host "Testing Internet Connectivity..." -ForegroundColor Yellow
-    Write-Log -Message "Testing Internet Connectivity..."
-    $InternetConn1=$true
-    $InternetConn2=$true
-    $InternetConn3=$true
-    $TestResult = (Test-NetConnection -ComputerName login.microsoftonline.com -Port 443).TcpTestSucceeded
-    if ($TestResult -eq $true){
-        Write-Host "Connection to login.microsoftonline.com .............. Succeeded." -ForegroundColor Green
-        Write-Log -Message "Connection to login.microsoftonline.com .............. Succeeded."
-    }else{
-        Write-Host "Connection to login.microsoftonline.com ................. failed." -ForegroundColor Red 
-        Write-Log -Message "Connection to login.microsoftonline.com ................. failed." -Level ERROR
-        $InternetConn1=$false
-    }
-    $TestResult = (Test-NetConnection -ComputerName device.login.microsoftonline.com -Port 443).TcpTestSucceeded
-    if ($TestResult -eq $true){
-        Write-Host "Connection to device.login.microsoftonline.com ......  Succeeded." -ForegroundColor Green 
-        Write-Log -Message "Connection to device.login.microsoftonline.com ......  Succeeded."
-    }else{
-        Write-Host "Connection to device.login.microsoftonline.com .......... failed." -ForegroundColor Red 
-        Write-Log -Message "Connection to device.login.microsoftonline.com .......... failed." -Level ERROR
-        $InternetConn2=$false
-    }
-    $TestResult = (Test-NetConnection -ComputerName enterpriseregistration.windows.net -Port 443).TcpTestSucceeded
-    if ($TestResult -eq $true){
-        Write-Host "Connection to enterpriseregistration.windows.net ..... Succeeded." -ForegroundColor Green 
-        Write-Log -Message "Connection to enterpriseregistration.windows.net ..... Succeeded."
-    }else{
-        Write-Host "Connection to enterpriseregistration.windows.net ........ failed." -ForegroundColor Red 
-        Write-Log -Message "Connection to enterpriseregistration.windows.net ........ failed." -Level ERROR
-        $InternetConn3=$false
-    }
-
-    if (($InternetConn1 -eq $true) -or ($InternetConn2 -eq $true) -or ($InternetConn3 -eq $true) ){
-        Write-Host "Test passed: user is able to communicate with MS endpoints successfully" -ForegroundColor Green -BackgroundColor Black
-        Write-Log -Message "Test passed: user is able to communicate with MS endpoints successfully"
-    }else{
-        Write-Host "Test failed: user is not able to communicate with MS endpoints" -ForegroundColor red -BackgroundColor Black
-        Write-Log -Message "Test failed: user is not able to communicate with MS endpoints" -Level ERROR
-        ''
-        Write-Host "Recommended action: make sure that the user is able to communicate with the above MS endpoints successfully" -ForegroundColor Yellow
-        Write-Log -Message "Recommended action: make sure that the user is able to communicate with the above MS endpoints successfully"
-        ''
-        ''
-        Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
-        Write-Log -Message "Script completed successfully."
-        ''
-        ''
-        exit                
-    }
+    
+    Test-DevRegConnectivity-User
     CheckMSOnline
     Test-DevRegApp
     ''
@@ -866,58 +876,9 @@ if ($AADJ -ne "YES"){
         ''
         exit
     }
+    
     #Checking Internet connectivity
-    ''
-    Write-Host "Testing Internet Connectivity..." -ForegroundColor Yellow
-    Write-Log -Message "Testing Internet Connectivity..."
-    $InternetConn1=$true
-    $InternetConn2=$true
-    $InternetConn3=$true
-    $TestResult = (Test-NetConnection -ComputerName login.microsoftonline.com -Port 443).TcpTestSucceeded
-    if ($TestResult -eq $true){
-        Write-Host "Connection to login.microsoftonline.com .............. Succeeded." -ForegroundColor Green
-        Write-Log -Message "Connection to login.microsoftonline.com .............. Succeeded."
-    }else{
-        Write-Host "Connection to login.microsoftonline.com ................. failed." -ForegroundColor Red 
-        Write-Log -Message "Connection to login.microsoftonline.com ................. failed." -Level ERROR
-        $InternetConn1=$false
-    }
-    $TestResult = (Test-NetConnection -ComputerName device.login.microsoftonline.com -Port 443).TcpTestSucceeded
-    if ($TestResult -eq $true){
-        Write-Host "Connection to device.login.microsoftonline.com ......  Succeeded." -ForegroundColor Green 
-        Write-Log -Message "Connection to device.login.microsoftonline.com ......  Succeeded."
-    }else{
-        Write-Host "Connection to device.login.microsoftonline.com .......... failed." -ForegroundColor Red 
-        Write-Log -Message "Connection to device.login.microsoftonline.com .......... failed." -Level ERROR
-        $InternetConn2=$false
-    }
-    $TestResult = (Test-NetConnection -ComputerName enterpriseregistration.windows.net -Port 443).TcpTestSucceeded
-    if ($TestResult -eq $true){
-        Write-Host "Connection to enterpriseregistration.windows.net ..... Succeeded." -ForegroundColor Green 
-        Write-Log -Message "Connection to enterpriseregistration.windows.net ..... Succeeded."
-    }else{
-        Write-Host "Connection to enterpriseregistration.windows.net ........ failed." -ForegroundColor Red 
-        Write-Log -Message "Connection to enterpriseregistration.windows.net ........ failed." -Level ERROR
-        $InternetConn3=$false
-    }
-    if (($InternetConn1 -eq $true) -or ($InternetConn2 -eq $true) -or ($InternetConn3 -eq $true) ){
-        Write-Host "Test passed: user is able to communicate with MS endpoints successfully" -ForegroundColor Green -BackgroundColor Black
-        Write-Log -Message "Test passed: user is able to communicate with MS endpoints successfully"
-    }else{
-        Write-Host "Test failed: user is not able to communicate with MS endpoints" -ForegroundColor red -BackgroundColor Black
-        Write-Log -Message "Test failed: user is not able to communicate with MS endpoints" -Level ERROR
-        ''
-        Write-Host "Recommended action: make sure that the user is able to communicate with the above MS endpoints successfully" -ForegroundColor Yellow
-        Write-Log -Message "Recommended action: make sure that the user is able to communicate with the above MS endpoints successfully"
-        ''
-        ''
-        Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
-        Write-Log -Message "Script completed successfully."
-        ''
-        ''
-        exit                
-    }
-
+    Test-DevRegConnectivity-User
     CheckMSOnline
     Test-DevRegApp
     ''
