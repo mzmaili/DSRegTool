@@ -1562,7 +1562,7 @@ Function CheckMSOnline{
             exit
         }
         Write-Host "Connected to MSOnline successfully." -ForegroundColor Green -BackgroundColor Black
-        Write-Log "Connected to MSOnline successfully."
+        Write-Log -Message "Connected to MSOnline successfully."
         ''
     } else {
         Write-Host "MSOnline Module is not installed" -ForegroundColor Red -BackgroundColor Black
