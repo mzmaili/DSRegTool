@@ -41,6 +41,7 @@ Function DSRegToolStart{
 }
 
 Function Test-DevRegConnectivity($Write){
+    $ProxyTestFailed=$false
     $winInetProxy=$false
     $TestConnResult=@()
     If($Write){Write-Host}
@@ -51,39 +52,8 @@ Function Test-DevRegConnectivity($Write){
     $global:ProxyServer = checkProxy $Write
     If($Write){Write-Host}
     If($Write){Write-Host "Testing Device Registration Endpoints..." -ForegroundColor Yellow; Write-Log -Message "Testing Device Registration Endpoints..."}
-    if ($global:ProxyServer -eq "NoProxy"){
-        $PSScript = "(Invoke-WebRequest -uri 'login.microsoftonline.com' -UseBasicParsing).StatusCode"
-        $TestResult = RunPScript -PSScript $PSScript
-        if ($TestResult -eq 200){
-            If($Write){Write-Host "Connection to login.microsoftonline.com .............. Succeeded." -ForegroundColor Green; Write-Log -Message "Connection to login.microsoftonline.com .............. Succeeded."}
-            $TestConnResult = $TestConnResult + "Connection to login.microsoftonline.com .............. Succeeded."
-        }else{
-            $global:TestFailed=$true
-            If($Write){Write-Host "Connection to login.microsoftonline.com ................. failed." -ForegroundColor Red; Write-Log -Message "Connection to login.microsoftonline.com ................. failed." -Level ERROR}
-            $TestConnResult = $TestConnResult + "Connection to login.microsoftonline.com ................. failed."
-        }
-        $PSScript = "(Invoke-WebRequest -uri 'device.login.microsoftonline.com' -UseBasicParsing).StatusCode"
-        $TestResult = RunPScript -PSScript $PSScript
-        if ($TestResult -eq 200){
-            If($Write){Write-Host "Connection to device.login.microsoftonline.com ......  Succeeded." -ForegroundColor Green; Write-Log -Message "Connection to device.login.microsoftonline.com ......  Succeeded."}
-            $TestConnResult = $TestConnResult + "Connection to device.login.microsoftonline.com ......  Succeeded."
-        }else{
-            $global:TestFailed=$true
-            If($Write){Write-Host "Connection to device.login.microsoftonline.com .......... failed." -ForegroundColor Red; Write-Log -Message "Connection to device.login.microsoftonline.com .......... failed." -Level ERROR}
-            $TestConnResult = $TestConnResult + "Connection to device.login.microsoftonline.com .......... failed."
-        }
-
-        $PSScript = "(Invoke-WebRequest -uri 'https://enterpriseregistration.windows.net/$global:TenantName/discover?api-version=1.7' -UseBasicParsing -Headers @{'Accept' = 'application/json'; 'ocp-adrs-client-name' = 'dsreg'; 'ocp-adrs-client-version' = '10'}).StatusCode"
-        $TestResult = RunPScript -PSScript $PSScript
-        if ($TestResult -eq 200){
-            If($Write){Write-Host "Connection to enterpriseregistration.windows.net ..... Succeeded." -ForegroundColor Green; Write-Log -Message "Connection to enterpriseregistration.windows.net ..... Succeeded."}
-            $TestConnResult = $TestConnResult + "Connection to enterpriseregistration.windows.net ..... Succeeded."
-        }else{
-            $global:TestFailed=$true
-            If($Write){Write-Host "Connection to enterpriseregistration.windows.net ........ failed." -ForegroundColor Red; Write-Log -Message "Connection to enterpriseregistration.windows.net ........ failed." -Level ERROR}
-            $TestConnResult = $TestConnResult + "Connection to enterpriseregistration.windows.net ........ failed."
-        }
-    }else{
+    if ($global:ProxyServer -ne "NoProxy"){
+        If($Write){Write-Host "Testing connection via winHTTP proxy..." -ForegroundColor Yellow; Write-Log -Message "Testing connection via winHTTP proxy..."}
         if ($global:login){
             $PSScript = "(Invoke-WebRequest -uri 'login.microsoftonline.com' -UseBasicParsing).StatusCode"
             $TestResult = RunPScript -PSScript $PSScript
@@ -95,19 +65,7 @@ Function Test-DevRegConnectivity($Write){
             If($Write){Write-Host "Connection to login.microsoftonline.com .............. Succeeded." -ForegroundColor Green; Write-Log -Message "Connection to login.microsoftonline.com .............. Succeeded."}
             $TestConnResult = $TestConnResult + "Connection to login.microsoftonline.com .............. Succeeded."
         }else{
-            #Test winInet
-            If($Write){Write-Log -Message "Connection failed via winHTTP, trying winInet..."}
-            $PSScript = "(Invoke-WebRequest -uri 'login.microsoftonline.com' -UseBasicParsing).StatusCode"
-            $TestResult = RunPScript -PSScript $PSScript
-            if ($TestResult -eq 200){
-                If($Write){Write-Host "Connection to login.microsoftonline.com .............. Succeeded." -ForegroundColor Green; Write-Log -Message "Connection to login.microsoftonline.com .............. Succeeded."}
-                $TestConnResult = $TestConnResult + "Connection to login.microsoftonline.com .............. Succeeded."
-                $winInetProxy=$true
-            }else{
-                $global:TestFailed=$true
-                If($Write){Write-Host "Connection to login.microsoftonline.com ................. failed." -ForegroundColor Red; Write-Log -Message "Connection to login.microsoftonline.com ................. failed." -Level ERROR}
-                $TestConnResult = $TestConnResult + "Connection to login.microsoftonline.com ................. failed."
-            }
+            $ProxyTestFailed=$true
         }
 
         if ($global:device){
@@ -121,19 +79,7 @@ Function Test-DevRegConnectivity($Write){
             If($Write){Write-Host "Connection to device.login.microsoftonline.com ......  Succeeded." -ForegroundColor Green; Write-Log -Message "Connection to device.login.microsoftonline.com ......  Succeeded."}
             $TestConnResult = $TestConnResult + "Connection to device.login.microsoftonline.com ......  Succeeded."
         }else{
-            #WinInet
-            If($Write){Write-Log -Message "Connection failed via winHTTP, trying winInet..."}
-            $PSScript = "(Invoke-WebRequest -uri 'device.login.microsoftonline.com' -UseBasicParsing).StatusCode"
-            $TestResult = RunPScript -PSScript $PSScript
-            if ($TestResult -eq 200){
-                If($Write){Write-Host "Connection to device.login.microsoftonline.com ......  Succeeded." -ForegroundColor Green; Write-Log -Message "Connection to device.login.microsoftonline.com ......  Succeeded."}
-                $TestConnResult = $TestConnResult + "Connection to device.login.microsoftonline.com ......  Succeeded."
-                $winInetProxy=$true
-            }else{
-                $global:TestFailed=$true
-                If($Write){Write-Host "Connection to device.login.microsoftonline.com .......... failed." -ForegroundColor Red; Write-Log -Message "Connection to device.login.microsoftonline.com .......... failed." -Level ERROR}
-                $TestConnResult = $TestConnResult + "Connection to device.login.microsoftonline.com .......... failed."
-            }
+            $ProxyTestFailed=$true
         }
 
         if ($global:enterprise){
@@ -147,80 +93,149 @@ Function Test-DevRegConnectivity($Write){
             If($Write){Write-Host "Connection to enterpriseregistration.windows.net ..... Succeeded." -ForegroundColor Green; Write-Log -Message "Connection to enterpriseregistration.windows.net ..... Succeeded."}
             $TestConnResult = $TestConnResult + "Connection to enterpriseregistration.windows.net ..... Succeeded."
         }else{
-        #WinInet
-        If($Write){Write-Log -Message "Connection failed via winHTTP, trying winInet..."}
+            $ProxyTestFailed=$true
+        }
+    }
+
+    if (($global:ProxyServer -eq "NoProxy") -or ($ProxyTestFailed -eq $true)){
+        if($ProxyTestFailed -eq $true){
+            If($Write){Write-host "Connection failed via winHTTP, trying winInet..."; Write-Log -Message "Connection failed via winHTTP, trying winInet..." -Level WARN}
+            If($Write){Write-Host ''}
+        }else{
+            If($Write){Write-host "Testing connection via winInet..." -ForegroundColor Yellow; Write-Log -Message "Testing connection via winInet..."}
+            If($Write){Write-Host ''}
+        }
+        $PSScript = "(Invoke-WebRequest -uri 'login.microsoftonline.com' -UseBasicParsing).StatusCode"
+        $TestResult = RunPScript -PSScript $PSScript
+        if ($TestResult -eq 200){
+            $winInetProxy=$true
+            If($Write){Write-Host "Connection to login.microsoftonline.com .............. Succeeded." -ForegroundColor Green; Write-Log -Message "Connection to login.microsoftonline.com .............. Succeeded."}
+            $TestConnResult = $TestConnResult + "Connection to login.microsoftonline.com .............. Succeeded."
+        }else{
+            $global:TestFailed=$true
+            If($Write){Write-Host "Connection to login.microsoftonline.com ................. failed." -ForegroundColor Red; Write-Log -Message "Connection to login.microsoftonline.com ................. failed." -Level ERROR}
+            $TestConnResult = $TestConnResult + "Connection to login.microsoftonline.com ................. failed."
+        }
+        $PSScript = "(Invoke-WebRequest -uri 'device.login.microsoftonline.com' -UseBasicParsing).StatusCode"
+        $TestResult = RunPScript -PSScript $PSScript
+        if ($TestResult -eq 200){
+            $winInetProxy=$true
+            If($Write){Write-Host "Connection to device.login.microsoftonline.com ......  Succeeded." -ForegroundColor Green; Write-Log -Message "Connection to device.login.microsoftonline.com ......  Succeeded."}
+            $TestConnResult = $TestConnResult + "Connection to device.login.microsoftonline.com ......  Succeeded."
+        }else{
+            $global:TestFailed=$true
+            If($Write){Write-Host "Connection to device.login.microsoftonline.com .......... failed." -ForegroundColor Red; Write-Log -Message "Connection to device.login.microsoftonline.com .......... failed." -Level ERROR}
+            $TestConnResult = $TestConnResult + "Connection to device.login.microsoftonline.com .......... failed."
+        }
+
         $PSScript = "(Invoke-WebRequest -uri 'https://enterpriseregistration.windows.net/$global:TenantName/discover?api-version=1.7' -UseBasicParsing -Headers @{'Accept' = 'application/json'; 'ocp-adrs-client-name' = 'dsreg'; 'ocp-adrs-client-version' = '10'}).StatusCode"
         $TestResult = RunPScript -PSScript $PSScript
         if ($TestResult -eq 200){
+            $winInetProxy=$true
             If($Write){Write-Host "Connection to enterpriseregistration.windows.net ..... Succeeded." -ForegroundColor Green; Write-Log -Message "Connection to enterpriseregistration.windows.net ..... Succeeded."}
             $TestConnResult = $TestConnResult + "Connection to enterpriseregistration.windows.net ..... Succeeded."
-            $winInetProxy=$true
         }else{
             $global:TestFailed=$true
             If($Write){Write-Host "Connection to enterpriseregistration.windows.net ........ failed." -ForegroundColor Red; Write-Log -Message "Connection to enterpriseregistration.windows.net ........ failed." -Level ERROR}
             $TestConnResult = $TestConnResult + "Connection to enterpriseregistration.windows.net ........ failed."
         }
+    }
+
+    # If test failed
+    if ($Write){
+        if ($global:TestFailed){
+            ''
+            ''
+            Write-Host "Test failed: device is not able to communicate with MS endpoints under system account" -ForegroundColor red -BackgroundColor Black
+            Write-Log -Message "Test failed: device is not able to communicate with MS endpoints under system account" -Level ERROR
+            ''
+            Write-Host "Recommended actions: " -ForegroundColor Yellow
+            Write-Host "- Make sure that the device is able to communicate with the above MS endpoints successfully under the system account." -ForegroundColor Yellow
+            Write-Host "- If the organization requires access to the internet via an outbound proxy, it is recommended to implement Web Proxy Auto-Discovery (WPAD)." -ForegroundColor Yellow
+            Write-Host "- If you don't use WPAD, you can configure proxy settings with GPO by deploying WinHTTP Proxy Settings on your computers beginning with Windows 10 1709." -ForegroundColor Yellow
+            Write-Host "- If the organization requires access to the internet via an authenticated outbound proxy, make sure that Windows 10 computers can successfully authenticate to the outbound proxy using the machine context." -ForegroundColor Yellow
+            Write-Log -Message "Recommended actions:
+            - Make sure that the device is able to communicate with the above MS endpoints successfully under the system account.
+            - If the organization requires access to the internet via an outbound proxy, it is recommended to implement Web Proxy Auto-Discovery (WPAD).
+            - If you don't use WPAD, you can configure proxy settings with GPO by deploying WinHTTP Proxy Settings on your computers beginning with Windows 10 1709.
+            - If the organization requires access to the internet via an authenticated outbound proxy, make sure that Windows 10 computers can successfully authenticate to the outbound proxy using the machine context."
+            ''
+            ''
+            Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+            Write-Log -Message "Script completed successfully."
+            ''
+            ''
+            exit
+        }else{
+            Write-Host ''
+            Write-Host "Test passed: Device is able to communicate with MS endpoints successfully under system context" -ForegroundColor Green -BackgroundColor Black
+            Write-Log -Message "Test passed: Device is able to communicate with MS endpoints successfully under system context"
         }
     }
     If ($winInetProxy){$global:ProxyServer="winInet"}
     return $TestConnResult
 }
 
-Function Test-DevRegConnectivity-User{
-    ''
-    Write-Host "Testing Internet Connectivity..." -ForegroundColor Yellow
-    Write-Log -Message "Testing Internet Connectivity..."
+Function Test-DevRegConnectivity-User($Write){
+    $ErrorActionPreference= 'silentlycontinue'
+    $global:TestFailed=$false
+    $TestConnResult=@()
+    If($Write){Write-Host}
+    If($Write){Write-Host "Testing Internet Connectivity..." -ForegroundColor Yellow; Write-Log -Message "Testing Internet Connectivity..."}
     $InternetConn1=$true
     $InternetConn2=$true
     $InternetConn3=$true
     #$TestResult = (Test-NetConnection -ComputerName login.microsoftonline.com -Port 443).TcpTestSucceeded
     $TestResult = (Invoke-WebRequest -uri 'login.microsoftonline.com' -UseBasicParsing).StatusCode
     if ($TestResult -eq 200){
-        Write-Host "Connection to login.microsoftonline.com .............. Succeeded." -ForegroundColor Green
-        Write-Log -Message "Connection to login.microsoftonline.com .............. Succeeded."
+        If($Write){Write-Host "Connection to login.microsoftonline.com .............. Succeeded." -ForegroundColor Green; Write-Log -Message "Connection to login.microsoftonline.com .............. Succeeded."}
+        $TestConnResult = $TestConnResult + "Connection to login.microsoftonline.com .............. Succeeded."
     }else{
-        Write-Host "Connection to login.microsoftonline.com ................. failed." -ForegroundColor Red 
-        Write-Log -Message "Connection to login.microsoftonline.com ................. failed." -Level ERROR
+        If($Write){Write-Host "Connection to login.microsoftonline.com ................. failed." -ForegroundColor Red; Write-Log -Message "Connection to login.microsoftonline.com ................. failed." -Level ERROR}
+        $TestConnResult = $TestConnResult + "Connection to login.microsoftonline.com ................. failed."
         $InternetConn1=$false
+        $global:TestFailed=$true
     }
     #$TestResult = (Test-NetConnection -ComputerName device.login.microsoftonline.com -Port 443).TcpTestSucceeded
     $TestResult = (Invoke-WebRequest -uri 'device.login.microsoftonline.com' -UseBasicParsing).StatusCode
     if ($TestResult -eq 200){
-        Write-Host "Connection to device.login.microsoftonline.com ......  Succeeded." -ForegroundColor Green 
-        Write-Log -Message "Connection to device.login.microsoftonline.com ......  Succeeded."
+        If($Write){Write-Host "Connection to device.login.microsoftonline.com ......  Succeeded." -ForegroundColor Green ;Write-Log -Message "Connection to device.login.microsoftonline.com ......  Succeeded."}
+        $TestConnResult = $TestConnResult + "Connection to device.login.microsoftonline.com ......  Succeeded."
     }else{
-        Write-Host "Connection to device.login.microsoftonline.com .......... failed." -ForegroundColor Red 
-        Write-Log -Message "Connection to device.login.microsoftonline.com .......... failed." -Level ERROR
+        If($Write){Write-Host "Connection to device.login.microsoftonline.com .......... failed." -ForegroundColor Red ;Write-Log -Message "Connection to device.login.microsoftonline.com .......... failed." -Level ERROR}
+        $TestConnResult = $TestConnResult + "Connection to device.login.microsoftonline.com .......... failed."
         $InternetConn2=$false
+        $global:TestFailed=$true
     }
     #$TestResult = (Test-NetConnection -ComputerName enterpriseregistration.windows.net -Port 443).TcpTestSucceeded
     $TestResult = (Invoke-WebRequest -uri 'https://enterpriseregistration.windows.net/microsoft.com/discover?api-version=1.7' -UseBasicParsing -Headers @{'Accept' = 'application/json'; 'ocp-adrs-client-name' = 'dsreg'; 'ocp-adrs-client-version' = '10'}).StatusCode
     if ($TestResult -eq 200){
-        Write-Host "Connection to enterpriseregistration.windows.net ..... Succeeded." -ForegroundColor Green 
-        Write-Log -Message "Connection to enterpriseregistration.windows.net ..... Succeeded."
+        If($Write){Write-Host "Connection to enterpriseregistration.windows.net ..... Succeeded." -ForegroundColor Green ;Write-Log -Message "Connection to enterpriseregistration.windows.net ..... Succeeded."}
+        $TestConnResult = $TestConnResult + "Connection to enterpriseregistration.windows.net ..... Succeeded."
     }else{
-        Write-Host "Connection to enterpriseregistration.windows.net ........ failed." -ForegroundColor Red 
-        Write-Log -Message "Connection to enterpriseregistration.windows.net ........ failed." -Level ERROR
+        If($Write){Write-Host "Connection to enterpriseregistration.windows.net ........ failed." -ForegroundColor Red ;Write-Log -Message "Connection to enterpriseregistration.windows.net ........ failed." -Level ERROR}
+        $TestConnResult = $TestConnResult + "Connection to enterpriseregistration.windows.net ........ failed."
         $InternetConn3=$false
+        $global:TestFailed=$true
     }
-
-    if (($InternetConn1 -eq $true) -and ($InternetConn2 -eq $true) -and ($InternetConn3 -and $true) ){
-        Write-Host "Test passed: user is able to communicate with MS endpoints successfully" -ForegroundColor Green -BackgroundColor Black
-        Write-Log -Message "Test passed: user is able to communicate with MS endpoints successfully"
-    }else{
-        Write-Host "Test failed: user is not able to communicate with MS endpoints" -ForegroundColor red -BackgroundColor Black
-        Write-Log -Message "Test failed: user is not able to communicate with MS endpoints" -Level ERROR
-        ''
-        Write-Host "Recommended action: make sure that the user is able to communicate with the above MS endpoints successfully" -ForegroundColor Yellow
-        Write-Log -Message "Recommended action: make sure that the user is able to communicate with the above MS endpoints successfully"
-        ''
-        ''
-        Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
-        Write-Log -Message "Script completed successfully."
-        ''
-        ''
-        exit                
+    if ($Write){
+        if ($global:TestFailed){
+            Write-Host "Test failed: user is not able to communicate with MS endpoints" -ForegroundColor red -BackgroundColor Black ;Write-Log -Message "Test failed: user is not able to communicate with MS endpoints" -Level ERROR
+            ''
+            Write-Host "Recommended action: make sure that the user is able to communicate with the above MS endpoints successfully" -ForegroundColor Yellow; Write-Log -Message "Recommended action: make sure that the user is able to communicate with the above MS endpoints successfully"
+            ''
+            ''
+            Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black; Write-Log -Message "Script completed successfully."
+            ''
+            ''
+            exit   
+       
+        }else{
+            Write-Host ''
+            Write-Host "Test passed: User is able to communicate with MS endpoints successfully" -ForegroundColor Green -BackgroundColor Black ;Write-Log -Message "Test passed: User is able to communicate with MS endpoints successfully"
+        }
     }
+    return $TestConnResult
 }
 
 Function CheckePRT{
@@ -293,24 +308,6 @@ Function CheckPRT{
     ''
     Write-Host "Testing if PowerShell running with elevated privileges..." -ForegroundColor Yellow
     Write-Log -Message "Testing if PowerShell running with elevated privileges..."
-    if (PSasAdmin){
-        # PS running as admin.
-        Write-Host "PowerShell is running with elevated privileges" -ForegroundColor Red -BackgroundColor Black
-        Write-Log -Message "PowerShell is running with elevated privileges" -Level WARN
-        ''
-        Write-Host "Recommended action: This test needs to be running with normal privileges" -ForegroundColor Yellow -BackgroundColor Black
-        Write-Log -Message "Recommended action: This test needs to be running with normal privileges"
-        ''
-        ''
-        Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
-        Write-Log -Message "Script completed successfully."
-        ''
-        ''
-        exit
-    }else{
-        Write-Host "PowerShell is running with normal privileges" -ForegroundColor Green -BackgroundColor Black
-        Write-Log -Message "PowerShell is running with normal privileges"
-    }
 
     #Check OS version:
     ''
@@ -430,6 +427,8 @@ Function CheckPRT{
                     ''
                     Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
                     Write-Log -Message "Script completed successfully."
+                    ''
+                    ''
                     }else{
                     Write-Host "Test failed: Azure AD PRT registry value does not exist for the looged on user" -ForegroundColor Red -BackgroundColor Black
                     Write-Log -Message "Test failed: Azure AD PRT registry value does not exist for the looged on user" -Level ERROR
@@ -531,6 +530,7 @@ Function CheckPRT{
                         ''
                         Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
                         Write-Log -Message "Script completed successfully."
+                        ''
                     }else{
                         Write-Host "Test failed: Azure AD PRT registry value does not exist for the looged on user" -ForegroundColor Red -BackgroundColor Black
                         Write-Log -Message "Test failed: Azure AD PRT registry value does not exist for the looged on user" -Level ERROR
@@ -647,12 +647,12 @@ $WPJ = ($WPJ.tostring() -split ":")[1].trim()
 if ($WPJ -ne "YES"){
     #The device is not connected to AAD:
     ### perform WPJ (all other tests should be here)
-    Write-Host "Test failed:" $hostname "device is NOT connected to Azure AD as Azure AD Registered device" -ForegroundColor Yellow -BackgroundColor Black
+    Write-Host "Test failed:" $hostname "device is NOT connected to Azure AD as Azure AD Registered device" -ForegroundColor Red -BackgroundColor Black
     Write-Log -Message "Test failed: $hostname device is NOT connected to Azure AD as Azure AD Registered device"
     
     #Checking Internet connectivity
-    
-    Test-DevRegConnectivity-User
+    Test-DevRegConnectivity-User $true | out-null
+
     CheckMSOnline
     Test-DevRegApp
     ''
@@ -878,7 +878,8 @@ if ($AADJ -ne "YES"){
     }
     
     #Checking Internet connectivity
-    Test-DevRegConnectivity-User
+    Test-DevRegConnectivity-User $true | out-null
+
     CheckMSOnline
     Test-DevRegApp
     ''
@@ -1286,7 +1287,7 @@ Function CopyFiles{
     StartCopyFile "$env:windir\system32\Lsass.log" "Lsass.log"
 }
 
-Function CompressLogsFolder{    #$CompressedFile = "DSRegTool_Logs_" + (Get-Date -Format yyyy-MM-dd_HH-mm)    $CompressedFile = "DSRegTool_Logs_" + (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd_HH-mm')    $FolderContent = "$(Join-Path -Path $pwd.Path -ChildPath $CompressedFile).zip"    Add-Type -Assembly "System.IO.Compression.FileSystem"    [System.IO.Compression.ZipFile]::CreateFromDirectory($global:LogsPath, $FolderContent)
+Function CompressLogsFolder{    $ErrorActionPreference = "SilentlyContinue"    #$CompressedFile = "DSRegTool_Logs_" + (Get-Date -Format yyyy-MM-dd_HH-mm)    $CompressedFile = "DSRegTool_Logs_" + (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd_HH-mm')    $FolderContent = "$(Join-Path -Path $pwd.Path -ChildPath $CompressedFile).zip"    Add-Type -Assembly "System.IO.Compression.FileSystem"    [System.IO.Compression.ZipFile]::CreateFromDirectory($global:LogsPath, $FolderContent)
     Write-host "Compressed file is ready in $FolderContent" -ForegroundColor Yellow
     # Cleanup the Temporary Folder (if error retain the temp files)
     if(Test-Path -Path $pwd.Path){
@@ -1433,7 +1434,7 @@ Function StartLogCollection{
         netsh trace start persistent=yes traceFile=.\DSRegToolLogs\Netmon.etl capture=yes maxsize=1024| Out-Null
         Write-Log -Message "Network trace started..." -logfile "$global:LogsPath\Log.log"
     }
-    ''    ''    Write-Host "Log collection has started, please start repro the issue..." -ForegroundColor Yellow    Write-Log -Message "Log collection has started, please start repro the issue..." -logfile "$global:LogsPath\Log.log"    ''}Function StopLogCollection{    Write-Host "When repro finished, please press ENTER to stop log collection..." -ForegroundColor Green -NoNewline    Write-Log -Message "When repro finished, please press ENTER to stop log collection..." -logfile "$global:LogsPath\Log.log"    Read-Host     #Disable debug and analytic logs:    DisableDebugEvents $global:DebugLogs    #Collect logs    Write-Host "Log collection has been stopped, please wait until we gather all files..." -ForegroundColor Yellow    Write-Log -Message "Log collection has been stopped, please wait until we gather all files..." -logfile "$global:LogsPath\Log.log"    Write-Host "Copying files..." -ForegroundColor Yellow    write-log -Message "Copying files..." -logfile "$global:LogsPath\Log.log"    CopyFiles    Write-Host "Exporting registry keys..." -ForegroundColor Yellow    write-log -Message "Exporting registry keys..." -logfile "$global:LogsPath\Log.log"    CollectLog $global:RegKeys    Write-Host "Exporting event viewer logs..." -ForegroundColor Yellow    CollectAdditionalLogs    write-log -Message "Exporting event viewer logs..." -logfile "$global:LogsPath\Log.log"    ExportEventViewerLogs $global:Events $global:LogsPath    RunPScript -PSScript "dsregcmd /status /debug" | Out-file "$global:LogsPath\dsregcmd-debug.txt"    Write-Log -Message "dsregcmd-debug.txt exported" -logfile "$global:LogsPath\Log.log"    getSCP    getwinHTTPinInet    CollectLogAADExt $global:AADExt    Write-Host "Stopping network traces, this may take few minutes..." -ForegroundColor Yellow    Write-Log -Message "Stopping network traces, this may take few minutes..." -logfile "$global:LogsPath\Log.log"    LogmanStop "WebAuth"    Write-Log -Message "WebAuth log collection stopped..." -logfile "$global:LogsPath\Log.log"    LogmanStop "LSA"    Write-Log -Message "LSA log collection stopped..." -logfile "$global:LogsPath\Log.log"    LogmanStop "Ntlm_CredSSP"    Write-Log -Message "Ntlm_CredSSP log collection stopped..." -logfile "$global:LogsPath\Log.log"    LogmanStop "Kerberos"    Write-Log -Message "Kerberos log collection stopped..." -logfile "$global:LogsPath\Log.log"    netsh trace stop | Out-Null    Test-DevRegConnectivity $false | Out-file "$global:LogsPath\TestDeviceRegConnectivity.txt"    Write-Log -Message "TestDeviceRegConnectivity.txt exported" -logfile "$global:LogsPath\Log.log"    Write-Log -Message "Log collection completed successfully"    Write-Host "Compressing collected logs..." -ForegroundColor Yellow    if (Test-Path "$pwd\DSRegTool.log"){
+    ''    ''    Write-Host "Log collection has started, please start repro the issue..." -ForegroundColor Yellow    Write-Log -Message "Log collection has started, please start repro the issue..." -logfile "$global:LogsPath\Log.log"    ''}Function StopLogCollection{    Write-Host "When repro finished, please press ENTER to stop log collection..." -ForegroundColor Green -NoNewline    Write-Log -Message "When repro finished, please press ENTER to stop log collection..." -logfile "$global:LogsPath\Log.log"    Read-Host     #Disable debug and analytic logs:    DisableDebugEvents $global:DebugLogs    #Collect logs    Write-Host "Log collection has been stopped, please wait until we gather all files..." -ForegroundColor Yellow    Write-Log -Message "Log collection has been stopped, please wait until we gather all files..." -logfile "$global:LogsPath\Log.log"    Write-Host "Copying files..." -ForegroundColor Yellow    write-log -Message "Copying files..." -logfile "$global:LogsPath\Log.log"    CopyFiles    Write-Host "Exporting registry keys..." -ForegroundColor Yellow    write-log -Message "Exporting registry keys..." -logfile "$global:LogsPath\Log.log"    CollectLog $global:RegKeys    Write-Host "Exporting event viewer logs..." -ForegroundColor Yellow    CollectAdditionalLogs    write-log -Message "Exporting event viewer logs..." -logfile "$global:LogsPath\Log.log"    ExportEventViewerLogs $global:Events $global:LogsPath    RunPScript -PSScript "dsregcmd /status /debug" | Out-file "$global:LogsPath\dsregcmd-debug.txt"    Write-Log -Message "dsregcmd-debug.txt exported" -logfile "$global:LogsPath\Log.log"    getSCP    getwinHTTPinInet    CollectLogAADExt $global:AADExt    Write-Host "Stopping network traces, this may take few minutes..." -ForegroundColor Yellow    Write-Log -Message "Stopping network traces, this may take few minutes..." -logfile "$global:LogsPath\Log.log"    LogmanStop "WebAuth"    Write-Log -Message "WebAuth log collection stopped..." -logfile "$global:LogsPath\Log.log"    LogmanStop "LSA"    Write-Log -Message "LSA log collection stopped..." -logfile "$global:LogsPath\Log.log"    LogmanStop "Ntlm_CredSSP"    Write-Log -Message "Ntlm_CredSSP log collection stopped..." -logfile "$global:LogsPath\Log.log"    LogmanStop "Kerberos"    Write-Log -Message "Kerberos log collection stopped..." -logfile "$global:LogsPath\Log.log"    netsh trace stop | Out-Null    Test-DevRegConnectivity $false | Out-file "$global:LogsPath\TestDeviceRegConnectivity-system.txt"    Write-Log -Message "TestDeviceRegConnectivity-system.txt exported" -logfile "$global:LogsPath\Log.log"    Test-DevRegConnectivity-User $false | Out-file "$global:LogsPath\TestDeviceRegConnectivity-user.txt"    Write-Log -Message "TestDeviceRegConnectivity-user.txt exported" -logfile "$global:LogsPath\Log.log"    Write-Log -Message "Log collection completed successfully"    Write-Host "Compressing collected logs..." -ForegroundColor Yellow    if (Test-Path "$pwd\DSRegTool.log"){
         Copy-Item "$pwd\DSRegTool.log" -Destination "$global:LogsPath\DSRegTool.log" | Out-Null
         Write-Log -Message "DSRegTool.log has copied" -logfile "$global:LogsPath\Log.log"
     }
@@ -1512,8 +1513,41 @@ Function CheckMSOnline{
     Write-Log -Message "Checking MSOnline Module..."
     if (Get-Module -ListAvailable -Name MSOnline) {
         Import-Module MSOnline
-        Write-Host "MSOnline Module has imported." -ForegroundColor Green -BackgroundColor Black
-        Write-Log -Message "MSOnline Module has imported."
+        Write-Host "MSOnline Module has imported" -ForegroundColor Green -BackgroundColor Black
+        Write-Log -Message "MSOnline Module has imported"
+        ''
+        Write-Host "Checking MSOnline version..." -ForegroundColor Yellow
+        Write-Log -Message "Checking MSOnline version..."
+        $MVersion = Get-Module msonline | Select-Object version
+        if (($MVersion.Version.Major -eq 1) -and ($MVersion.Version.Minor -eq 1) -and ($MVersion.Version.Build -ge 183)){
+            Write-Host "You have a supported version" -ForegroundColor Green -BackgroundColor Black
+            Write-Log -Message "You have a supported version"
+        }else{
+            Write-Host "You have an old version" -ForegroundColor Red -BackgroundColor Black
+            Write-Log -Message "You have an old version"
+            ''
+            Write-Host "Updating MSOnline version..." -ForegroundColor Yellow
+            Write-Log -Message "Updating MSOnline version..."
+            Update-Module msonline -force
+            Remove-Module msonline
+            Import-Module msonline
+            $MVersion = Get-Module msonline | Select-Object version
+            if (($MVersion.Version.Major -eq 1) -and ($MVersion.Version.Minor -eq 1) -and ($MVersion.Version.Build -ge 183)){
+                Write-Host "MSOnline Module has been updated, please reopen PowerShell window" -ForegroundColor Green -BackgroundColor Black
+                Write-Log -Message "MSOnline Module has been updated, please reopen PowerShell window"
+                ''
+                ''
+                Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
+                Write-Log -Message "Script completed successfully."
+                ''
+                ''
+                exit
+            }else{
+                Write-Host "Operation aborted. MSOnline module has not updated, please make sure you are running PowerShell as admin" -ForegroundColor red -BackgroundColor Black
+                Write-Log -Message "Operation aborted. MSOnline module has not updated, please make sure you are running PowerShell as admin"
+                exit
+            }
+        }
         ''
         Write-Host "Connecting to MSOnline..." -ForegroundColor Yellow
         Write-Log -Message "Connecting to MSOnline..."
@@ -1522,80 +1556,47 @@ Function CheckMSOnline{
         }else{
             Connect-MsolService -ErrorAction SilentlyContinue
         }
-
         if (-not (Get-MsolCompanyInformation -ErrorAction SilentlyContinue)){
-            Write-Host "Operation aborted. Unable to connect to MSOnline." -ForegroundColor red -BackgroundColor Black
-            Write-Log -Message "Operation aborted. Unable to connect to MSOnline, please check you entered a correct credentials and you have the needed permissions." -Level ERROR
-            ''
-            Write-Host "Recommended action: Please check you entered a correct credentials and you have the needed permissions." -ForegroundColor Yellow -BackgroundColor Black
-            Write-Log -Message "Recommended action: Please check you entered a correct credentials and you have the needed permissions."
-            ''
-            ''
-            Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
-            Write-Log -Message "Script completed successfully."
-            ''
-            ''
+            Write-Host "Operation aborted. Unable to connect to MSOnline, please check you entered a correct credentials and you have the needed permissions" -ForegroundColor red -BackgroundColor Black
+            Write-Log -Message "Operation aborted. Unable to connect to MSOnline, please check you entered a correct credentials and you have the needed permissions"
+            exit
+        }
+        Write-Host "Connected to MSOnline successfully." -ForegroundColor Green -BackgroundColor Black
+        Write-Log "Connected to MSOnline successfully."
+        ''
+    } else {
+        Write-Host "MSOnline Module is not installed" -ForegroundColor Red -BackgroundColor Black
+        Write-Log -Message "MSOnline Module is not installed"
+        Write-Host "Installing MSOnline Module....." -ForegroundColor Yellow
+        Write-Log -Message "Installing MSOnline Module....."
+        CheckInternet
+        Install-Module MSOnline -force
+        if (Get-Module -ListAvailable -Name MSOnline) {                                
+        Write-Host "MSOnline Module has installed" -ForegroundColor Green -BackgroundColor Black
+        Write-Log -Message "MSOnline Module has installed"
+        Import-Module MSOnline
+        Write-Host "MSOnline Module has imported" -ForegroundColor Green -BackgroundColor Black
+        Write-Log -Message "MSOnline Module has imported"
+        ''
+        Write-Host "Connecting to MSOnline..." -ForegroundColor Yellow
+        Write-Log -Message "Connecting to MSOnline..." 
+        Connect-MsolService -ErrorAction SilentlyContinue
+        if (-not (Get-MsolCompanyInformation -ErrorAction SilentlyContinue)){
+            Write-Host "Operation aborted. Unable to connect to MSOnline, please check you entered a correct credentials and you have the needed permissions" -ForegroundColor red -BackgroundColor Black
+            Write-Log -Message "Operation aborted. Unable to connect to MSOnline, please check you entered a correct credentials and you have the needed permissions"
             exit
         }
         Write-Host "Connected to MSOnline successfully." -ForegroundColor Green -BackgroundColor Black
         Write-Log -Message "Connected to MSOnline successfully."
         ''
-    } else {
-        Write-Host "MSOnline Module is not installed." -ForegroundColor Red -BackgroundColor Black
-        Write-Log -Message "MSOnline Module is not installed."
-        Write-Host "Installing MSOnline Module....." -ForegroundColor Yellow
-        Write-Log -Message "Installing MSOnline Module....."
-        CheckInternet
-        Install-Module MSOnline -force
-                                
-        if (Get-Module -ListAvailable -Name MSOnline) {                                
-            Write-Host "MSOnline Module has installed." -ForegroundColor Green -BackgroundColor Black
-            Write-Log -Message "MSOnline Module has installed."
-            Import-Module MSOnline
-            Write-Host "MSOnline Module has imported." -ForegroundColor Green -BackgroundColor Black
-            Write-Log -Message "MSOnline Module has imported."
-            ''
-            Write-Host "Connecting to MSOnline..." -ForegroundColor Yellow
-            Write-Log -Message "Connecting to MSOnline..."
-            Connect-MsolService -ErrorAction SilentlyContinue
-        
-            if (-not (Get-MsolCompanyInformation -ErrorAction SilentlyContinue)){
-                Write-Host "Operation aborted. Unable to connect to MSOnline module." -ForegroundColor red -BackgroundColor Black
-                Write-Log -Message "Operation aborted. Unable to connect to MSOnline module." -Level ERROR
-                ''
-                Write-Host "Recommended action: Please make sure that you have entered correct credentials and you have the needed permissions." -ForegroundColor Yellow -BackgroundColor Black
-                Write-Log -Message "Recommended action: Please make sure that you have entered correct credentials and you have the needed permissions." -Level ERROR
-                ''
-                ''
-                Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
-                Write-Log -Message "Script completed successfully."
-                ''
-                ''
-                exit
-            }
-            Write-Host "Connected to MSOnline successfully." -ForegroundColor Green -BackgroundColor Black
-            Write-Log -Message "Connected to MSOnline successfully."
-            ''
         } else {
-            ''
-            ''
-            Write-Host "Operation aborted. MSOnline was not installed." -ForegroundColor red -BackgroundColor Black
-            Write-Log -Message "Operation aborted. MSOnline was not installed."
-            ''
-            Write-Host "Recommended action: Please make sure MSOnline module is installed." -ForegroundColor Yellow -BackgroundColor Black
-            Write-Log -Message "Recommended action: Please make sure MSOnline module is installed."
-            ''
-            ''
-            Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
-            Write-Log -Message "Script completed successfully."
-            ''
-            ''
-            exit
+        ''
+        ''
+        Write-Host "Operation aborted. MsOnline was not installed" -ForegroundColor red -BackgroundColor Black
+        Write-Log -Message "Operation aborted. MsOnline was not installed"
+        exit
         }
     }
-
-
-
 }
 
 Function RunPScript([String] $PSScript){
@@ -2746,35 +2747,6 @@ if ($AADJ -ne "YES"){
     #Checking Internet connectivity
     Test-DevRegConnectivity $true | Out-Null
 
-    # If test failed
-    if ($global:TestFailed){
-        ''
-        ''
-        Write-Host "Test failed: device is not able to communicate with MS endpoints under system account" -ForegroundColor red -BackgroundColor Black
-        Write-Log -Message "Test failed: device is not able to communicate with MS endpoints under system account" -Level ERROR
-        ''
-        Write-Host "Recommended actions: " -ForegroundColor Yellow
-        Write-Host "- Make sure that the device is able to communicate with the above MS endpoints successfully under the system account." -ForegroundColor Yellow
-        Write-Host "- If the organization requires access to the internet via an outbound proxy, it is recommended to implement Web Proxy Auto-Discovery (WPAD)." -ForegroundColor Yellow
-        Write-Host "- If you don't use WPAD, you can configure proxy settings with GPO by deploying WinHTTP Proxy Settings on your computers beginning with Windows 10 1709." -ForegroundColor Yellow
-        Write-Host "- If the organization requires access to the internet via an authenticated outbound proxy, make sure that Windows 10 computers can successfully authenticate to the outbound proxy using the machine context." -ForegroundColor Yellow
-        Write-Log -Message "Recommended actions:
-        - Make sure that the device is able to communicate with the above MS endpoints successfully under the system account.
-        - If the organization requires access to the internet via an outbound proxy, it is recommended to implement Web Proxy Auto-Discovery (WPAD).
-        - If you don't use WPAD, you can configure proxy settings with GPO by deploying WinHTTP Proxy Settings on your computers beginning with Windows 10 1709.
-        - If the organization requires access to the internet via an authenticated outbound proxy, make sure that Windows 10 computers can successfully authenticate to the outbound proxy using the machine context."
-        ''
-        ''
-        Write-Host "Script completed successfully." -ForegroundColor Green -BackgroundColor Black
-        Write-Log -Message "Script completed successfully."
-        ''
-        ''
-        exit
-    }else{
-        Write-Host "Test passed: Device is able to communicate with MS endpoints successfully under system context" -ForegroundColor Green -BackgroundColor Black
-        Write-Log -Message "Test passed: Device is able to communicate with MS endpoints successfully under system context"
-    }
-
     ###conn
 
     #Testing if the device synced (with managed domain)
@@ -3118,6 +3090,7 @@ Write-Log -Message "Script completed successfully."
 ''
 ''    
 }
+$ErrorActionPreference= 'silentlycontinue'
 $global:DomainAuthType=""
 $global:MEXURL=""
 $global:MEXURLRun=$true
