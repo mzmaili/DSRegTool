@@ -401,53 +401,60 @@ Function SyncJoinCheck($Fallback){
     Write-Host ''
     Write-Host "Testing userCertificate attribute under AD computer object..." -ForegroundColor Yellow
     Write-Log -Message "Testing userCertificate attribute under AD computer object..."
-    $ValidUserCertExist=$false
-    $userCerts=([adsisearcher]"(&(name=$env:computername)(objectClass=computer))").findall().Properties.usercertificate
-    $userCertCount=$userCerts.count
-    if ($userCertCount -ge 1){
-    Write-Host "AD computer object has $userCertCount certificate(s) under userCertificate attribute" -ForegroundColor Green
-    Write-Log -Message "AD computer object has $userCertCount certificate(s) under userCertificate attribute"
-    Write-Host ''
-    Write-Host "Testing self-signed certificate validity..." -ForegroundColor Yellow
-    Write-Log -Message "Testing self-signed certificate validity..."
-        foreach ($userCert in $userCerts){
-            $userCert=(new-object X509Certificate(,$userCert))
-            $certSubject=($userCert.Subject.tostring() -split "CN=")[1].trim()
-            If ($certSubject -eq $ComputerGUID){
-                $ValidUserCertExist=$true
+
+    if($global:UserUPN.Length -ne 0){
+
+        $ValidUserCertExist=$false
+        $userCerts=([adsisearcher]"(&(name=$env:computername)(objectClass=computer))").findall().Properties.usercertificate
+        $userCertCount=$userCerts.count
+        if ($userCertCount -ge 1){
+        Write-Host "AD computer object has $userCertCount certificate(s) under userCertificate attribute" -ForegroundColor Green
+        Write-Log -Message "AD computer object has $userCertCount certificate(s) under userCertificate attribute"
+        Write-Host ''
+        Write-Host "Testing self-signed certificate validity..." -ForegroundColor Yellow
+        Write-Log -Message "Testing self-signed certificate validity..."
+            foreach ($userCert in $userCerts){
+                $userCert=(new-object X509Certificate(,$userCert))
+                $certSubject=($userCert.Subject.tostring() -split "CN=")[1].trim()
+                If ($certSubject -eq $ComputerGUID){
+                    $ValidUserCertExist=$true
+                }
             }
+        }else{
+            #No userCert exist
+            Write-Host "Test failed: There is no userCertificate under AD computer object" -ForegroundColor Red
+            Write-Log -Message "Test failed: There is no userCertificate under AD computer object" -Level ERROR
+            Write-Host ''
+            Write-Host "Recommended action: Make sure to start device registration process, and the device has permission to write self-signed certificate under AD computer object" -ForegroundColor Yellow
+            Write-Log -Message "Recommended action: Make sure to start device registration process, and the device has permission to write self-signed certificate under AD computer object"
+            Write-Host ''
+            Write-Host ''
+            Write-Host "Script completed successfully." -ForegroundColor Green
+            Write-Log -Message "Script completed successfully."
+            Write-Host ''
+            Write-Host ''
+            exit
+        }
+        if ($ValidUserCertExist){
+            Write-Host "Test passed: AD computer object has a valid self-signed certificate" -ForegroundColor Green
+            Write-Log -Message "Test passed: AD computer object has a valid self-signed certificate"
+        }else{
+            Write-Host "Test failed: There is no valid self-signed certificate under AD computer object userCertificate attribute" -ForegroundColor Red
+            Write-Log -Message "Test failed: There is no valid self-signed certificate under AD computer object userCertificate attribute" -Level ERROR
+            Write-Host ''
+            Write-Host "Recommended action: Make sure to start device registration process, and the device has permission to write self-signed certificate under AD computer object" -ForegroundColor Yellow
+            Write-Log -Message "Recommended action: Make sure to start device registration process, and the device has permission to write self-signed certificate under AD computer object"
+            Write-Host ''
+            Write-Host ''
+            Write-Host "Script completed successfully." -ForegroundColor Green
+            Write-Log -Message "Script completed successfully."
+            Write-Host ''
+            Write-Host ''
+            exit
         }
     }else{
-        #No userCert exist
-        Write-Host "Test failed: There is no userCertificate under AD computer object" -ForegroundColor Red
-        Write-Log -Message "Test failed: There is no userCertificate under AD computer object" -Level ERROR
-        Write-Host ''
-        Write-Host "Recommended action: Make sure to start device registration process, and the device has permission to write self-signed certificate under AD computer object" -ForegroundColor Yellow
-        Write-Log -Message "Recommended action: Make sure to start device registration process, and the device has permission to write self-signed certificate under AD computer object"
-        Write-Host ''
-        Write-Host ''
-        Write-Host "Script completed successfully." -ForegroundColor Green
-        Write-Log -Message "Script completed successfully."
-        Write-Host ''
-        Write-Host ''
-        exit
-    }
-    if ($ValidUserCertExist){
-        Write-Host "Test passed: AD computer object has a valid self-signed certificate" -ForegroundColor Green
-        Write-Log -Message "Test passed: AD computer object has a valid self-signed certificate"
-    }else{
-        Write-Host "Test failed: There is no valid self-signed certificate under AD computer object userCertificate attribute" -ForegroundColor Red
-        Write-Log -Message "Test failed: There is no valid self-signed certificate under AD computer object userCertificate attribute" -Level ERROR
-        Write-Host ''
-        Write-Host "Recommended action: Make sure to start device registration process, and the device has permission to write self-signed certificate under AD computer object" -ForegroundColor Yellow
-        Write-Log -Message "Recommended action: Make sure to start device registration process, and the device has permission to write self-signed certificate under AD computer object"
-        Write-Host ''
-        Write-Host ''
-        Write-Host "Script completed successfully." -ForegroundColor Green
-        Write-Log -Message "Script completed successfully."
-        Write-Host ''
-        Write-Host ''
-        exit
+        Write-Host "Test failed: signed in user is not a domain user, you should sign in with domain user to perform this test" -ForegroundColor Yellow
+        Write-Log -Message "Test failed: signed in user is not a domain user, you should sign in with domain user to perform this test" -Level WARN
     }
 
     #Checking if device synced
@@ -1131,9 +1138,11 @@ Function VerifySCP{
     Write-Host ''
     Write-Host "Testing Domain Controller connectivity..." -ForegroundColor Yellow
     Write-Log -Message "Testing Domain Controller connectivity..."
-    $Root = [ADSI]"LDAP://RootDSE"
-    $ConfigurationName = $Root.rootDomainNamingContext
-    if (($ConfigurationName.length) -eq 0){
+    $DCName=""
+    $DCTest=nltest /dsgetdc:
+    $DCName = $DCTest | Select-String DC | Select-Object -first 1
+    $DCName =($DCName.tostring() -split "DC: \\")[1].trim()
+    if (($DCName.length) -eq 0){
         Write-Host "Test failed: connection to Domain Controller failed" -ForegroundColor Red
         Write-Log -Message "Test failed: connection to Domain Controller failed" -Level ERROR
         Write-Host ''
@@ -2261,20 +2270,24 @@ Function CheckDeviceHealth($DID, $skipPendingCheck){
     Write-Host ''
     Write-Host "Checking if device is stale..." -ForegroundColor Yellow
     Write-Log -Message "Checking if device is stale..."
-
     $CurrentDate = Get-Date 
     $Diff = New-TimeSpan -Start $LastLogonTimestamp -End $CurrentDate
     $diffDays=$Diff.Days
-    if($diffDays -ge 21){
+    if(($diffDays -ge 21) -or ($diffDays.length -eq 0)){
         Write-Host "Device could be stale" -ForegroundColor Yellow
-        Write-Log -Message "Device could be stale"
+        Write-Log -Message "Device could be stale" -Level WARN
     }else{
-        Write-Host "Device is not stale" -ForegroundColor Green
+    Write-Host "Device is not stale" -ForegroundColor Green
         Write-Log -Message "Device is not stale"
     }
-    Write-Host "Last logon timestamp: $LastLogonTimestamp UTC, $diffDays days ago" -ForegroundColor Green
-    $msg= "Last logon timestamp: $LastLogonTimestamp UTC, $diffDays days ago"
-    Write-Log -Message $msg
+    if($diffDays.length -eq 0) {
+        Write-Host "There is no sign in yet on this device" -ForegroundColor Yellow
+        Write-Log -Message "There is no sign in yet on this device" -Level WARN
+    }else{
+        Write-Host "Last logon timestamp: $LastLogonTimestamp UTC, $diffDays days ago" -ForegroundColor Green
+        $msg= "Last logon timestamp: $LastLogonTimestamp UTC, $diffDays days ago"
+        Write-Log -Message $msg
+    }
 }
 
 Function NewFun{
@@ -2695,12 +2708,16 @@ Function DJ++TS{
 
         #Check connectivity to DC if it has not performed yet
         if ($global:DCTestPerformed=$false){
+            #Check connectivity to DC
+            $global:DCTestPerformed=$true
             Write-Host ''
             Write-Host "Testing Domain Controller connectivity..." -ForegroundColor Yellow
             Write-Log -Message "Testing Domain Controller connectivity..."
-            $Root = [ADSI]"LDAP://RootDSE"
-            $ConfigurationName = $Root.rootDomainNamingContext
-            if (($ConfigurationName.length) -eq 0){
+            $DCName=""
+            $DCTest=nltest /dsgetdc:
+            $DCName = $DCTest | Select-String DC | Select-Object -first 1
+            $DCName =($DCName.tostring() -split "DC: \\")[1].trim()
+            if (($DCName.length) -eq 0){
                 Write-Host "Test failed: connection to Domain Controller failed" -ForegroundColor Red
                 Write-Log -Message "Test failed: connection to Domain Controller failed" -Level ERROR
                 Write-Host ''
