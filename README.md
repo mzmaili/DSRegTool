@@ -81,7 +81,7 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 - Shows logs collection steps 
     
 ## User experience
-![Alt text](https://github.com/mzmaili/DSRegTool/blob/master/DSRegTool.png "DSRegTool")
+![Alt text](https://github.com/mzmaili/DSRegTool/blob/master/media/DSRegTool.png "DSRegTool")
 
 
 # Frequently asked questions
