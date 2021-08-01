@@ -1,9 +1,18 @@
 # Device Registration Troubleshooter Tool
-Usually it is not so easy to troubleshoot device registration issues and it does take some time, but now, using Device Registration Troubleshooter tool it is not complex anymore :)
+Coming from the fact that it is not so easy to troubleshoot device registration issues and it does take some time, but now, using Device Registration Troubleshooter tool it is not complex anymore :)
 
-DSRegTool PowerShell is a comprehensive tool that performs more than 30 different tests that help you to identify and fix the most common device registration issues for all join types (Hybrid Azure AD joined, Azure AD Joined and Azure AD Register).
+DSRegTool PowerShell is a comprehensive tool that performs more than 50 different tests that helps you to identify and fix the most common device registration issues for all join types (Hybrid Azure AD joined, Azure AD Joined and Azure AD Register).
 
- 
+## Script requirements
+You can run DSRegTool as a normal user, except with option #3 and option #7
+
+## How to run the script
+Download and run the `DSRegTool.ps1` script from [this](https://github.com/mzmaili/DSRegTool/) GitHub repo. 
+
+## Why is this script useful?
+DSRegTool facilitates troubleshooting device registration issues for different join types
+
+## What are tests DSRegTool perform?
 #### 1- Troubleshoot Azure AD Register
 - Testing OS version
 - Testing if the device is registered to AzureAD by the signed in user
@@ -71,36 +80,13 @@ DSRegTool PowerShell is a comprehensive tool that performs more than 30 differen
 
 - Shows logs collection steps 
     
-    
+## User experience
 ![Alt text](https://github.com/mzmaili/DSRegTool/blob/master/DSRegTool.png "DSRegTool")
 
 
-```azurepowershell
-.SYNOPSIS 
-    DeviceRegTroubleshooter PowerShell script. 
- 
-.DESCRIPTION 
-    DeviceRegTroubleshooter.ps1 is a PowerShell script that troubleshhot device registration common issues. 
- 
-.AUTHOR: 
-    Mohammad Zmaili 
- 
-.EXAMPLE 
-    .\DeviceRegTroubleshooter.ps1 
- 
-    Enter (1) to troubleshoot Azure AD Register 
- 
-    Enter (2) to troubleshoot Azure AD Join device 
- 
-    Enter (3) to troubleshoot Hybrid Azure AD Join 
- 
-    Enter (4) to verify Service Connection Point (SCP) 
- 
-    Enter (5) to verify the health status of the device 
- 
-    Enter (6) to Verify Primary Refresh Token (PRT) 
- 
-    Enter (7) to collect the logs 
- 
-    Enter (Q) to Quit 
-```
+# Frequently asked questions
+## Does this script change anything?
+No. It just retrieves data.
+
+## Does this script require any PowerShell module to be installed?
+No, the script does not require any PowerShell module.
