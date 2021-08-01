@@ -471,13 +471,13 @@ Function SyncJoinCheck($Fallback){
     $AADDevice=$GraphResult.Content | ConvertFrom-Json
     if($AADDevice.value.Count -ge 1){
         #The device existing in AAD:
-        Write-Host "Test passed: the device object exists on Azure AD." -ForegroundColor Green
-        Write-Log -Message "Test passed: the device object exists on Azure AD."
+        Write-Host "Test passed: the device object exists on Azure AD" -ForegroundColor Green
+        Write-Log -Message "Test passed: the device object exists on Azure AD"
     }else{
         #Device does not exist:
         ###Reregister device to AAD
-        Write-Host "Test failed: the device does not exist in your Azure AD tenant." -ForegroundColor Red
-        Write-Log -Message "Test failed: the device does not exist in your Azure AD tenant." -Level ERROR
+        Write-Host "Test failed: the device does not exist in your Azure AD tenant" -ForegroundColor Red
+        Write-Log -Message "Test failed: the device does not exist in your Azure AD tenant" -Level ERROR
         $DeviceDN = ((([adsisearcher]"(&(name=$env:computername)(objectClass=computer))").findall().path).tostring() -split "LDAP://")[1].trim()
         Write-Host ''
         Write-Host "Recommended action: Make sure the device is in the sync scope, and it is successfully exported to Azure AD by Azure AD Connect." -ForegroundColor Yellow
@@ -855,9 +855,6 @@ Function WPJTS{
         Write-Host "Test passed:" $hostname "device is connected to Azure AD tenant:" $TenantName "as Azure AD Register device" -ForegroundColor Green
         Write-Log -Message "Test passed: $hostname device is connected to Azure AD tenant: $TenantName as Azure AD Register device"
     }
-    Write-Host ''
-    Write-Host "Testing the device status on Azure AD..." -ForegroundColor Yellow
-    Write-Log -Message "Testing the device status on Azure AD..."
 
     #Check the device status on AAD:
     $DID = $DSReg | Select-String WorkplaceDeviceId
@@ -1032,9 +1029,6 @@ Function AADJ{
         Write-Host "Test passed:" $hostname "device is joined to Azure AD tenant:" $TenantName -ForegroundColor Green
         Write-Log -Message "Test passed: $hostname device is joined to Azure AD tenant: $TenantName"
     }
-    Write-Host ''
-    Write-Host "Testing the device status on Azure AD..." -ForegroundColor Yellow
-    Write-Log -Message "Testing the device status on Azure AD..."
 
     #CheckMSOnline
 
@@ -1146,8 +1140,8 @@ Function VerifySCP{
         Write-Host "Test failed: connection to Domain Controller failed" -ForegroundColor Red
         Write-Log -Message "Test failed: connection to Domain Controller failed" -Level ERROR
         Write-Host ''
-        Write-Host "Recommended action: Make sure that the device has a line of sight to the Domain controller" -ForegroundColor Yellow
-        Write-Log -Message "Recommended action: Make sure that the device has a line of sight to the Domain controller"
+        Write-Host "Recommended action: Make sure that the device has a line of sight connection to the Domain controller" -ForegroundColor Yellow
+        Write-Log -Message "Recommended action: Make sure that the device has a line of sight connection to the Domain controller"
         Write-Host ''
         Write-Host ''
         Write-Host "Script completed successfully." -ForegroundColor Green
@@ -1436,30 +1430,7 @@ Function StartLogCollection{
     '{8a4fc74e-b158-4fc1-a266-f7670c6aa75d},0xffffffffffffffff,0xff',`
     '{60A7AB7A-BC57-43E9-B78A-A1D516577AE3},0xffffff,0xff',`
     '{98E6CFCB-EE0A-41E0-A57B-622D4E1B30B1},0xffffffffffffffff,0xff',`
-    '{6B510852-3583-4e2d-AFFE-A67F9F223438},0x7ffffff,0xff'    Write-Host ''
-    Write-Host "Testing if script running with elevated privileges..." -ForegroundColor Yellow 
-    Write-Log -Message "Testing if script running with elevated privileges..." -logfile "$global:LogsPath\Log.log"
-    if (PSasAdmin){
-        # PS running as admin.
-        Write-Host "PowerShell is running with elevated privileges" -ForegroundColor Green
-        Write-Log -Message "PowerShell is running with elevated privileges" -logfile "$global:LogsPath\Log.log"
-        Write-Host ''
-    }else{
-        Write-Host "PowerShell is NOT running with elevated privileges" -ForegroundColor Red
-        Write-Log -Message "PowerShell is NOT running with elevated privileges" -Level ERROR -logfile "$global:LogsPath\Log.log"
-        Write-Host ''
-        Write-Host "Recommended action: Log collection should to be running with elevated privileges" -ForegroundColor Yellow
-        Write-Log -Message "Recommended action: Log collection should to be running with elevated privileges" -logfile "$global:LogsPath\Log.log"
-        Write-Host ''
-        Write-Host ''
-        Write-Host "Script completed successfully." -ForegroundColor Green
-        Write-Log -Message "Script completed successfully." -logfile "$global:LogsPath\Log.log"
-        Write-Host ''
-        Write-Host ''
-        exit
-    }
-
-    #Create DSRegToolLogs folder.
+    '{6B510852-3583-4e2d-AFFE-A67F9F223438},0x7ffffff,0xff'    #Create DSRegToolLogs folder.
     Write-Log -Message "Log collection has started"
     Write-Host "Creating DSRegToolLogs folder under $pwd" -ForegroundColor Yellow
     if (!(Test-Path $global:LogsPath)){
@@ -1541,6 +1512,40 @@ Function CollectAdditionalLogs{
 }
 
 Function LogsCollection{
+    Write-Host ''
+    Write-Host "Testing if script running with elevated privileges..." -ForegroundColor Yellow 
+    Write-Log -Message "Testing if script running with elevated privileges..."
+    if (PSasAdmin){
+        # PS running as admin.
+        Write-Host "PowerShell is running with elevated privileges" -ForegroundColor Green
+        Write-Log -Message "PowerShell is running with elevated privileges"
+        Write-Host ''
+    }else{
+        Write-Host "PowerShell is NOT running with elevated privileges" -ForegroundColor Red
+        Write-Log -Message "PowerShell is NOT running with elevated privileges" -Level ERROR
+        Write-Host ''
+        Write-Host "Recommended action: Run log collection option with elevated privileges, or otherwise, follow the following action plan to collect logs using Feedback Hub:`n"  -ForegroundColor Yellow
+        Write-Host " - Open Feedback Hub by pressing (Windows key + F)"
+        Write-Host " - Make sure 'Advanced diagnostics' tab is visible. Otherwise click on settings and select 'Show Advanced Diagnostics page' checkbox"
+        Write-Host " - Click on Advanced Diagnostics tab"
+        Write-Host " - Choose 'Default diagnostics' option"
+        Write-Host " - From 'Select which diagnostic to collect' dropdown list, select 'Security and Privacy' and 'Work or School Account'"
+        Write-Host " - Click on 'Start recording' when you are ready"
+        Write-Host " - Repro the issue"
+        Write-Host " - Click on 'Stop recording'"
+        Write-Host " - Click on 'File location' to open 'Security and privacy-Work or School-Repro' folder"
+        Write-Host " - Open latest created Repro folder"
+        Write-Host " - Share 'diagnostics.zip' compressed file with Microsoft support engineer"
+        Write-Log -Message "Recommended action: Run log collection option with elevated privileges, or otherwise follow the following action plan to collect logs using Feedback Hub:`n                                 - Open Feedback Hub by pressing (Windows key + F)`n                                 - Make sure 'Advanced diagnostics' tab is visible. Otherwise click on settings and select 'Show Advanced Diagnostics age' checkbox`n                                 - Click on Advanced Diagnostics tab`n                                 - Choose 'Default diagnostics' option`n                                 - From 'Select which diagnostic to collect' ropdown list, select 'Security and Privacy' and 'Work or School Account'`n                                 - Click on 'Start recording' when you are ready`n                                 - Repro the issue`n                                 - Click on 'Stop recording'`n                                 - Click on 'File location' to open 'Security and privacy-Work or School-Repro' folder`n                                 - Open latest created Repro folder`n                                 - Share 'diagnostics.zip' compressed file with Microsoft support engineer"
+        Write-Host ''
+        Write-Host ''
+        Write-Host "Script completed successfully." -ForegroundColor Green
+        Write-Log -Message "Script completed successfully."
+        Write-Host ''
+        Write-Host ''
+        exit
+    }
+
     $global:LogsPath=$pwd.Path+"\DSRegToolLogs"
     $global:PreTraceEvents = "Microsoft-Windows-AAD/Operational","Microsoft-Windows-User Device Registration/Admin","Microsoft-Windows-CAPI2/Operational","Microsoft-Windows-HelloForBusiness/Operational","Microsoft-Windows-LiveId/Operational","Microsoft-Windows-User Control Panel/Operational","Microsoft-Windows-WebAuth/Operational","Microsoft-Windows-WebAuthN/Operational","Microsoft-Windows-Biometrics/Operational","Microsoft-Windows-IdCtrls/Operational","Microsoft-Windows-Crypto-DPAPI/Operational"
     $global:DebugLogs="Microsoft-Windows-AAD/Analytic","Microsoft-Windows-User Device Registration/Debug"
@@ -2194,17 +2199,17 @@ Function CheckDeviceHealth($DID, $skipPendingCheck){
 
     #Check if the device exist:
     ''
-    Write-Host "Testing if device exists in Azure AD..." -ForegroundColor Yellow
-    Write-Log -Message "Testing if device exists in Azure AD..."
+    Write-Host "Testing if device exists on Azure AD..." -ForegroundColor Yellow
+    Write-Log -Message "Testing if device exists on Azure AD..."
     if ($deviceExists){
         #The device existing in AAD:
-        Write-Host "Test passed: the device object exists on Azure AD." -ForegroundColor Green
-        Write-Log -Message "Test passed: the device object exists on Azure AD."
+        Write-Host "Test passed: the device object exists on Azure AD" -ForegroundColor Green
+        Write-Log -Message "Test passed: the device object exists on Azure AD"
     }else{
         #Device does not exist:
         ###Rejoin device to AAD
-        Write-Host "Test failed: the device does not exist in your Azure AD tenant." -ForegroundColor Red
-        Write-Log -Message "Test failed: the device does not exist in your Azure AD tenant." -Level ERROR
+        Write-Host "Test failed: the device does not exist in your Azure AD tenant" -ForegroundColor Red
+        Write-Log -Message "Test failed: the device does not exist in your Azure AD tenant" -Level ERROR
         ''
         Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again. If you have a Managed domain, make sure the device is in the sync scope." -ForegroundColor Yellow
         Write-Log -Message "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again. If you have a Managed domain, make sure the device is in the sync scope."
@@ -2222,11 +2227,11 @@ Function CheckDeviceHealth($DID, $skipPendingCheck){
     Write-Host "Testing if device is enabled on Azure AD..." -ForegroundColor Yellow
     Write-Log -Message "Testing if device is enabled on Azure AD..."
     if ($deviceEnabled){
-        Write-Host "Test passed: the device is enabled on Azure AD tenant." -ForegroundColor Green
-        Write-Log -Message "Test passed: the device is enabled on Azure AD tenant."
+        Write-Host "Test passed: the device is enabled on Azure AD tenant" -ForegroundColor Green
+        Write-Log -Message "Test passed: the device is enabled on Azure AD tenant"
     }else{
-        Write-Host "Test failed: the device is not enabled on Azure AD tenant." -ForegroundColor Red
-        Write-Log -Message "Test failed: the device is not enabled on Azure AD tenant." -Level ERROR
+        Write-Host "Test failed: the device is not enabled on Azure AD tenant" -ForegroundColor Red
+        Write-Log -Message "Test failed: the device is not enabled on Azure AD tenant" -Level ERROR
         ''
         Write-Host "Recommended action: Enable the device on Azure AD tenant. For more information, visit the link: https://docs.microsoft.com/en-us/azure/active-directory/devices/device-management-azure-portal#enable--disable-an-azure-ad-device." -ForegroundColor Yellow
         Write-Log -Message "Recommended action: Enable the device on Azure AD tenant. For more information, visit the link: https://docs.microsoft.com/en-us/azure/active-directory/devices/device-management-azure-portal#enable--disable-an-azure-ad-device."
@@ -2426,9 +2431,6 @@ Function NewFunAAD{
     Write-Host "Checking the device certificate configuration..." -ForegroundColor Yellow
     Write-Log -Message "Checking the device certificate configuration..."
     CheckCert -DeviceID $DID -DeviceThumbprint $DTP
-    Write-Host ''
-    Write-Host "Checking the device status on Azure AD..." -ForegroundColor Yellow
-    Write-Log -Message "Checking the device status on Azure AD..."
     #Check the device status on AAD:
     CheckDeviceHealth $DID $true
     
@@ -2462,9 +2464,7 @@ Function NewFunWPJ{
     Write-Host "Checking the device certificate configuration..." -ForegroundColor Yellow
     Write-Log -Message "Checking the device certificate configuration..."
     CheckUserCert -DeviceID $DID -DeviceThumbprint $DTP
-    Write-Host ''
-    Write-Host "Checking the device status on Azure AD..." -ForegroundColor Yellow
-    Write-Log -Message "Checking the device status on Azure AD..."
+
     #Check the device status on AAD:
     CheckDeviceHealth $DID $true
 
@@ -2721,8 +2721,8 @@ Function DJ++TS{
                 Write-Host "Test failed: connection to Domain Controller failed" -ForegroundColor Red
                 Write-Log -Message "Test failed: connection to Domain Controller failed" -Level ERROR
                 Write-Host ''
-                Write-Host "Recommended action: Make sure that the device has a line of sight to the Domain controller" -ForegroundColor Yellow
-                Write-Log -Message "Recommended action: Make sure that the device has a line of sight to the Domain controller"
+                Write-Host "Recommended action: Make sure that the device has a line of sight connection to the Domain controller" -ForegroundColor Yellow
+                Write-Log -Message "Recommended action: Make sure that the device has a line of sight connection to the Domain controller"
                 Write-Host ''
                 Write-Host ''
                 Write-Host "Script completed successfully." -ForegroundColor Green
@@ -2886,10 +2886,6 @@ Function DJ++TS{
         Write-Log -Message "Test passed: $hostname device is joined to Azure AD tenant: $TenantName"
     }
 
-    Write-Host ''
-    Write-Host "Testing the device status on Azure AD..." -ForegroundColor Yellow
-    Write-Log -Message "Testing the device status on Azure AD..."
-
     #CheckMSOnline
 
     #Check the device status on AAD:
@@ -2933,8 +2929,8 @@ Function DJ++TS{
             Write-Host ''
             exit                
         }else{
-            Write-Host "Test passed: The device is not in dual state." -ForegroundColor Green
-            Write-Log -Message "Test passed: The device is not in dual state."
+            Write-Host "Test passed: The device is not in dual state" -ForegroundColor Green
+            Write-Log -Message "Test passed: The device is not in dual state"
         }
     }
 
@@ -3047,6 +3043,12 @@ if($Num -eq '1'){
     Write-Host ''
     DSRegToolStart
     VerifySCP
+    Write-Host ''
+    Write-Host ''
+    Write-Host "Script completed successfully." -ForegroundColor Green
+    Write-Log -Message "Script completed successfully."
+    Write-Host ''
+    Write-Host ''   
 }elseif($Num -eq '5'){
     Write-Host ''
     Write-Host "Verify the health status of the device option has been chosen"
