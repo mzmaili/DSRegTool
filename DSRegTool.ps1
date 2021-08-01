@@ -2867,7 +2867,7 @@ Function DJ++TS{
 
     }   
         #Check DevReg app
-        #ConnecttoAzureAD, it should be connected from syncjoincheck function
+        ConnecttoAzureAD
         Test-DevRegApp
         Write-Host ''
         Write-Host ''
