@@ -16,9 +16,9 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 #### 1- Troubleshoot Azure AD Register
 - Testing OS version
 - Testing if the device is registered to AzureAD by the signed in user
-- Testing Internet Connectivity
+- Testing Device Registration endpoints connectivity
 - Testing Device Registration Service
-- Testing if the device exist on AAD
+- Testing if the device exists on AAD
 - Testing if the device is enabled on AAD 
 
 #### 2- Troubleshoot Azure AD Join device
@@ -27,9 +27,9 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 - Testing if the device is joined to AzureAD
 - Testing if you signed in user is a Built-in Administrator account
 - Testing if the signed in user has local admin permissions
-- Testing Internet Connectivity
+- Testing Device Registration endpoints connectivity
 - Testing Device Registration Service
-- Testing if the device exist on AAD.
+- Testing if the device exists on AAD.
 - Testing if the device is enabled on AAD 
 
 #### 3- Troubleshoot Hybrid Azure AD Join
@@ -39,13 +39,25 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 - Testing Automatic-Device-Join task scheduler
 - Testing Domain Controller connectivity
 - Testing Service Connection Point (SCP) configuration for both client and domain sides
-- Testing if the device synced successfully to AAD (for Managed domains)
-- Testing MEX endpoints (for Federated domains)
-- Testing Internet Connectivity
+- Testing Device Registration endpoints connectivity under system context:
+    - Testing connectivity over winHTTP proxy (considering if domain is bypassed)
+    - Testing connectivity over winInet proxy (considering if domain is bypassed)
+- Testing the following with Federated domain:
+    - Testing MEX endpoint (for Federated domains)
+    - Testing windowstransport endpoints (for Federated domains)
+    - If federated join flow failed, checking sync join flow
+    - Testing OS version if it supports fallback to sync join
+    - Testing fallback to sync join configuration enablement
+- Testing the following with Managed domain / Sync join flow:
+    - Testing if the device synced successfully to AAD (for Managed domains)
+    - Testing userCertificate attribute under AD computer object
+    - Testing self-signed certificate validity
+    - Testing if the device synced to Azure AD
 - Testing Device Registration Service
-- Test if the device exist on AAD.
+- Test if the device exists on AAD.
 - Test if the device enabled on AAD.
-- Test if the device is not pending on AAD. 
+- Test if the device is not pending on AAD.
+- Testing if device is stale
 
 #### 4- Verify Service Connection Point (SCP)
 - Testing client-side registry setting
@@ -60,7 +72,7 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 - Checks if the device is joined to AzureAD
 - Checks if the device hybrid, Azure AD Join or Azure AD Register
 - Checks the device certificate configuration.
-- Checks if the device exist on AAD.
+- Checks if the device exists on AAD.
 - Checks if the device enabled on AAD.
 - Checks if the device is not pending on AAD
 - Shows the health status for the device
@@ -77,8 +89,7 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 - Testing the registry configuration (WPJ) 
 
 #### 7- Collect the logs
-
-- Shows logs collection steps 
+- If DSRegTool is running with elevated privileges, start log collection. Otherwise, tool shows action plan to collect the logs using Feedback hub.
     
 ## User experience
 ![Alt text](https://github.com/mzmaili/DSRegTool/blob/master/media/DSRegTool.png "DSRegTool")
