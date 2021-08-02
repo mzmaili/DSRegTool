@@ -4,7 +4,7 @@ Coming from the fact that it is not so easy to troubleshoot device registration 
 DSRegTool PowerShell is a comprehensive tool that performs more than 50 different tests that helps you to identify and fix the most common device registration issues for all join types (Hybrid Azure AD joined, Azure AD Joined and Azure AD Register).
 
 ## Script requirements
-You can run DSRegTool as a normal user, except with option #3 and option #7
+You can run DSRegTool as a normal user, except with option #3 and option #7 where you need to run DSRegTool with a user who has local admin permissions
 
 ## How to run the script
 Download and run the `DSRegTool.ps1` script from [this](https://github.com/mzmaili/DSRegTool/) GitHub repo. 
