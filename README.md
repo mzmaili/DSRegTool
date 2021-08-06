@@ -110,7 +110,7 @@ Here is log collection output file reference:
 | ------------- | ------------- |
 | dsregcmd-status.txt | dsregcmd /status output |
 | dsregcmd-debug.txt | dsregcmd /debug output under system context |
-| DeviceInfo.txt | the following machine's information: OS version, Device Name, Object GUID, Distinguished Name and UserCertificate |
+| DeviceInfo.txt | Following machine's information: OS version, Device Name, Object GUID, Distinguished Name and UserCertificate |
 | hosts.txt | Copy of machine's hosts file |
 | ipconfig-all.txt | Machine's IP address configuration |
 | Winver.txt | Windows OS version |
@@ -126,8 +126,8 @@ Here is log collection output file reference:
 | winInet-user-regkey.txt | winInet registry value under logged on user context |
 | winInet-system.txt | winInet configuration under system context |
 | winInet-system-regkey.txt | winInet registry value under system context |
-| TestDeviceRegConnectivity-user.txt | the result of testing Device Registration endpoints connectivity under system context |
-| TestDeviceRegConnectivity-system.txt | the result of testing Device Registration endpoints connectivity under system context |
+| TestDeviceRegConnectivity-user.txt | Result of testing Device Registration endpoints connectivity under system context |
+| TestDeviceRegConnectivity-system.txt | Result of testing Device Registration endpoints connectivity under system context |
 | Task-Scheduler.txt | Task scheduler configuration |
 | tasklist.txt | Running tasks |
 | set.txt | System environment values |
@@ -176,9 +176,9 @@ Here is log collection output file reference:
 | AADExtention\ </br> AzuerVMInfo.txt | Azure VM information |
 | AADExtention\ </br> AzureVMTenantID.txt | Tenant ID that is associated with the Azure Subscription |
 | AADExtention\ </br> AzureVMAccessToken.txt | Azure VM Access Token |
-| AADExtention\ </br> pas.windows.net.txt | connectivity result to pas.windows.net |
-| AADExtention\ </br> login.microsoftonline.com.txt | connectivity result to login.microsoftonline.com |
-| AADExtention\ </br> device.login.microsoftonline.com.txt | connectivity result to device.login.microsoftonline.com |
-| AADExtention\ </br> enterpriseregistration.windows.net.txt | connectivity result to enterpriseregistration.windows.net |
+| AADExtention\ </br> pas.windows.net.txt | Connectivity result to pas.windows.net |
+| AADExtention\ </br> login.microsoftonline.com.txt | Connectivity result to login.microsoftonline.com |
+| AADExtention\ </br> device.login.microsoftonline.com.txt | Connectivity result to device.login.microsoftonline.com |
+| AADExtention\ </br> enterpriseregistration.windows.net.txt | Connectivity result to enterpriseregistration.windows.net |
 | Log.log | Shows log collection verbose logs |
 | DSRegTool.log | Copy of DSRegTool log file |
