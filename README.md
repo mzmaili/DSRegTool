@@ -112,7 +112,7 @@ Here is log collection output file reference:
 | dsregcmd-debug.txt | dsregcmd /debug output under system context |
 | DeviceInfo.txt | the following machine's information: OS version, Device Name, Object GUID, Distinguished Name and UserCertificate |
 | hosts.txt | Copy of machine's hosts file |
-| ipconfig-all.txt | machine's IP address configuration |
+| ipconfig-all.txt | Machine's IP address configuration |
 | Winver.txt | Windows OS version |
 | IdentityStore.txt | HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\IdentityStore registry value |
 | WPJ-info.txt | HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AAD registry value |
@@ -121,25 +121,25 @@ Here is log collection output file reference:
 | Winlogon-current-control-set.txt | HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Winlogon registry value |
 | WorkplaceJoin-control.txt | HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\WorkplaceJoin registry value |
 | Lsa.txt | HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa registry value |
-| winInet-user.txt | winHTTP configuration under logged on user context |
-| winInet-user-regkey.txt | winInet registry value under logged on user context |
 | winHTTP.txt | winHTTP configuration under system context |
-| winInet-system-regkey.txt | winInet registry value under system context |
+| winInet-user.txt | winInet configuration under logged on user context |
+| winInet-user-regkey.txt | winInet registry value under logged on user context |
 | winInet-system.txt | winInet configuration under system context |
+| winInet-system-regkey.txt | winInet registry value under system context |
 | TestDeviceRegConnectivity-user.txt | the result of testing Device Registration endpoints connectivity under system context |
 | TestDeviceRegConnectivity-system.txt | the result of testing Device Registration endpoints connectivity under system context |
 | Task-Scheduler.txt | Task scheduler configuration |
-| tasklist.txt | running tasks |
-| set.txt | system environment values |
-| services-running.txt | running services |
+| tasklist.txt | Running tasks |
+| set.txt | System environment values |
+| services-running.txt | Running services |
 | services-config.txt | sc config |
 | SCP-config-partition.txt | SCP from domain configuration partition |
 | SCP-client-side.txt | SCP client-side registry value |
 | Schannel.txt | Schannel registry value |
 | GPResult.htm | Group Policy Result |
-| Patches.htm | installed windows updates |
-| netstat-nao.txt | of established network connections |
-| route-print.txt | routing table |
+| Patches.htm | Installed windows updates |
+| netstat-nao.txt | Established network connections |
+| route-print.txt | Routing table |
 | Netsetup.log | Netsetup debug logs |
 | netlogon.log | Netlogon debug logs |
 | Netlogon.txt | Netlogon registry value |
