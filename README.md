@@ -133,28 +133,28 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 | Netsetup.log | Contains Netsetup debug logs |
 | netlogon.log | Contains Netlogon debug logs |
 | Netlogon.txt | Contains Netlogon registry value |
-| Microsoft-Windows-AAD-Operational.evtx | CloudAP plugin and AAD broker plugin operational logs |
-| Microsoft-Windows-AAD-Analytic.evtx | CloudAP plugin and AAD broker diagnostic logs |
-| Microsoft-Windows-User Device Registration-Admin.evtx | Device Registration administrative logs |
-| Microsoft-Windows-User Device Registration-Debug.evtx | Device Registration diagnostic logs |
-| Microsoft-Windows-Biometrics-Operational.evtx | Biometrics operational logs|
-| Microsoft-Windows-HelloForBusiness-Operational.evtx | Windows Hello for Business logs |
-| Microsoft-Windows-LiveId-Operational.evtx | Live ID operational logs |
-| Microsoft-Windows-Kerberos-Operational.evtx | Kerberos operational logs |
-| Microsoft-Windows-Shell-Core-Operational.evtx | Shell core operational logs |
-| Microsoft-Windows-WebAuthN-Operational.evtx | WebAuthN operational logs including FIDO key logs  |
-| Microsoft-Windows-WebAuth-Operational.evtx | WebAuth operational logs |
-| Microsoft-Windows-WMI-Activity-Operational.evtx | WMI activity operational logs |
-| Microsoft-Windows-Authentication-AuthenticationPolicyFailures-DomainController.evtx | Authentication Policy Failur logs |
-| Microsoft-Windows-Authentication-ProtectedUser-Client.evtx | Protected user failure client logs |
-| Microsoft-Windows-Authentication-ProtectedUserFailures-DomainController.evtx | Protected user failure authentication logs |
-| Microsoft-Windows-Authentication-ProtectedUserSuccesses-DomainController.evtx | Protected user successes authentication logs |
-| Microsoft-Windows-CAPI2-Operational.evtx | Certificate operational logs |
-| Microsoft-Windows-CertPoleEng-Operational.evtx | CertPoleEng operational logs |
-| Microsoft-Windows-Crypto-DPAPI-Operational.evtx | Crypto DPAPI operational logs |
-| Microsoft-Windows-GroupPolicy-Operational.evtx | Group policy operational logs |
-| Microsoft-Windows-IdCtrls-Operational.evtx | IdCtrls operational logs |
-| Microsoft-Windows-User Control Panel-Operational.evtx | Control panel operational logs |
+| AAD-Operational.evtx | CloudAP plugin and AAD broker plugin operational logs |
+| AAD-Analytic.evtx | CloudAP plugin and AAD broker diagnostic logs |
+| User Device Registration-Admin.evtx | Device Registration administrative logs |
+| User Device Registration-Debug.evtx | Device Registration diagnostic logs |
+| Biometrics-Operational.evtx | Biometrics operational logs|
+| HelloForBusiness-Operational.evtx | Windows Hello for Business logs |
+| LiveId-Operational.evtx | Live ID operational logs |
+| Kerberos-Operational.evtx | Kerberos operational logs |
+| Shell-Core-Operational.evtx | Shell core operational logs |
+| WebAuthN-Operational.evtx | WebAuthN operational logs including FIDO key logs  |
+| WebAuth-Operational.evtx | WebAuth operational logs |
+| WMI-Activity-Operational.evtx | WMI activity operational logs |
+| Authentication-AuthenticationPolicyFailures-DomainController.evtx | Authentication Policy Failur logs |
+| Authentication-ProtectedUser-Client.evtx | Protected user failure client logs |
+| Authentication-ProtectedUserFailures-DomainController.evtx | Protected user failure authentication logs |
+| Authentication-ProtectedUserSuccesses-DomainController.evtx | Protected user successes authentication logs |
+| CAPI2-Operational.evtx | Certificate operational logs |
+| CertPoleEng-Operational.evtx | CertPoleEng operational logs |
+| Crypto-DPAPI-Operational.evtx | Crypto DPAPI operational logs |
+| GroupPolicy-Operational.evtx | Group policy operational logs |
+| IdCtrls-Operational.evtx | IdCtrls operational logs |
+| User Control Panel-Operational.evtx | Control panel operational logs |
 | System.evtx | Machine system event logs |
 | Application.evtx | Machine application event logs |
 | LSA.etl | contains LSA debug traces in binary format |
