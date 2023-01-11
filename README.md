@@ -1,4 +1,4 @@
-![visitor badge](https://visitor-badge.glitch.me/badge?DSRegTool)
+![visitor badge](https://visitor-badge.glitch.me/badge?page_id=DSRegTool)
 # Device Registration Troubleshooter Tool
 Coming from the fact that it is not so easy to troubleshoot device registration issues and it does take some time, but now, using Device Registration Troubleshooter tool it is not complex anymore :)
 
