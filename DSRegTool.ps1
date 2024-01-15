@@ -1,7 +1,7 @@
 ﻿<#
  
 .SYNOPSIS
-    DSRegTool V3.6 PowerShell script.
+    DSRegTool V4.0 PowerShell script.
 
 .DESCRIPTION
     Device Registration Troubleshooter Tool is a PowerShell script that troubleshoots device registration common issues.
@@ -12,11 +12,11 @@
 .EXAMPLE
     .\DSRegTool.ps1
 
-    Enter (1) to troubleshoot Azure AD Register
+    Enter (1) to troubleshoot Microsoft Entra Register
 
-    Enter (2) to troubleshoot Azure AD Join device
+    Enter (2) to troubleshoot Microsoft Entra join device
 
-    Enter (3) to troubleshoot Hybrid Azure AD Join
+    Enter (3) to troubleshoot Microsoft Entra hybrid join
 
     Enter (4) to verify Service Connection Point (SCP)
 
@@ -33,7 +33,7 @@
 
 Function DSRegToolStart{
     $ErrorActionPreference= 'silentlycontinue'
-    Write-Host "DSRegTool 3.6 has started" -ForegroundColor Yellow
+    Write-Host "DSRegTool 4.0 has started" -ForegroundColor Yellow
     $msg="Device Name : " + (Get-Childitem env:computername).value
     Write-Host $msg  -ForegroundColor Yellow
     $msg="User Account: " + (whoami) +", UPN: "+$global:UserUPN
@@ -55,10 +55,10 @@ Function Test-DevRegConnectivity($Write){
     if ($global:ProxyServer -ne "NoProxy"){
         If($Write){Write-Host "Testing connection via winHTTP proxy..." -ForegroundColor Yellow; Write-Log -Message "Testing connection via winHTTP proxy..."}
         if ($global:login){
-            $PSScript = "(Invoke-WebRequest -uri 'login.microsoftonline.com/common/oauth2' -UseBasicParsing).StatusCode"
+            $PSScript = "(Invoke-WebRequest -uri 'https://login.microsoftonline.com/common/oauth2' -UseBasicParsing).StatusCode"
             $TestResult = RunPScript -PSScript $PSScript
         }else{
-            $PSScript = "(Invoke-WebRequest -uri 'login.microsoftonline.com/common/oauth2' -UseBasicParsing -Proxy $global:ProxyServer).StatusCode"
+            $PSScript = "(Invoke-WebRequest -uri 'https://login.microsoftonline.com/common/oauth2' -UseBasicParsing -Proxy $global:ProxyServer).StatusCode"
             $TestResult = RunPScript -PSScript $PSScript
         }
         if ($TestResult -eq 200){
@@ -69,10 +69,10 @@ Function Test-DevRegConnectivity($Write){
         }
 
         if ($global:device){
-            $PSScript = "(Invoke-WebRequest -uri 'device.login.microsoftonline.com/common/oauth2' -UseBasicParsing).StatusCode"
+            $PSScript = "(Invoke-WebRequest -uri 'https://device.login.microsoftonline.com/common/oauth2' -UseBasicParsing).StatusCode"
             $TestResult = RunPScript -PSScript $PSScript
         }else{
-            $PSScript = "(Invoke-WebRequest -uri 'device.login.microsoftonline.com/common/oauth2' -UseBasicParsing -Proxy $global:ProxyServer).StatusCode"
+            $PSScript = "(Invoke-WebRequest -uri 'https://device.login.microsoftonline.com/common/oauth2' -UseBasicParsing -Proxy $global:ProxyServer).StatusCode"
             $TestResult = RunPScript -PSScript $PSScript
         }
         if ($TestResult -eq 200){
@@ -105,7 +105,7 @@ Function Test-DevRegConnectivity($Write){
             If($Write){Write-host "Testing connection via winInet..." -ForegroundColor Yellow; Write-Log -Message "Testing connection via winInet..."}
             If($Write){Write-Host ''}
         }
-        $PSScript = "(Invoke-WebRequest -uri 'login.microsoftonline.com/common/oauth2' -UseBasicParsing).StatusCode"
+        $PSScript = "(Invoke-WebRequest -uri 'https://login.microsoftonline.com/common/oauth2' -UseBasicParsing).StatusCode"
         $TestResult = RunPScript -PSScript $PSScript
         if ($TestResult -eq 200){
             $winInetProxy=$true
@@ -116,7 +116,7 @@ Function Test-DevRegConnectivity($Write){
             If($Write){Write-Host "Connection to login.microsoftonline.com ................. failed." -ForegroundColor Red; Write-Log -Message "Connection to login.microsoftonline.com ................. failed." -Level ERROR}
             $TestConnResult = $TestConnResult + "Connection to login.microsoftonline.com ................. failed."
         }
-        $PSScript = "(Invoke-WebRequest -uri 'device.login.microsoftonline.com/common/oauth2' -UseBasicParsing).StatusCode"
+        $PSScript = "(Invoke-WebRequest -uri 'https://device.login.microsoftonline.com/common/oauth2' -UseBasicParsing).StatusCode"
         $TestResult = RunPScript -PSScript $PSScript
         if ($TestResult -eq 200){
             $winInetProxy=$true
@@ -186,7 +186,7 @@ Function Test-DevRegConnectivity-User($Write){
     $InternetConn2=$true
     $InternetConn3=$true
     #$TestResult = (Test-NetConnection -ComputerName login.microsoftonline.com -Port 443).TcpTestSucceeded
-    $TestResult = (Invoke-WebRequest -uri 'login.microsoftonline.com/common/oauth2' -UseBasicParsing).StatusCode
+    $TestResult = (Invoke-WebRequest -uri 'https://login.microsoftonline.com/common/oauth2' -UseBasicParsing).StatusCode
     if ($TestResult -eq 200){
         If($Write){Write-Host "Connection to login.microsoftonline.com .............. Succeeded." -ForegroundColor Green; Write-Log -Message "Connection to login.microsoftonline.com .............. Succeeded."}
         $TestConnResult = $TestConnResult + "Connection to login.microsoftonline.com .............. Succeeded."
@@ -197,7 +197,7 @@ Function Test-DevRegConnectivity-User($Write){
         $global:TestFailed=$true
     }
     #$TestResult = (Test-NetConnection -ComputerName device.login.microsoftonline.com -Port 443).TcpTestSucceeded
-    $TestResult = (Invoke-WebRequest -uri 'device.login.microsoftonline.com/common/oauth2' -UseBasicParsing).StatusCode
+    $TestResult = (Invoke-WebRequest -uri 'https://device.login.microsoftonline.com/common/oauth2' -UseBasicParsing).StatusCode
     if ($TestResult -eq 200){
         If($Write){Write-Host "Connection to device.login.microsoftonline.com ......  Succeeded." -ForegroundColor Green ;Write-Log -Message "Connection to device.login.microsoftonline.com ......  Succeeded."}
         $TestConnResult = $TestConnResult + "Connection to device.login.microsoftonline.com ......  Succeeded."
@@ -288,8 +288,8 @@ Function Test-DevRegApp-old{
        Write-Host "Test passed: Device Registration Service is enabled on the tenant" -ForegroundColor Green 
        Write-Log -Message "Test passed: Device Registration Service is enabled on the tenant"
     }else{
-        Write-Host "Test failed: Deice Registration Service is disabled on the tenant" -ForegroundColor red
-        Write-Log -Message "Test failed: Deice Registration Service is disabled on the tenant" -Level ERROR
+        Write-Host "Test failed: Device Registration Service is disabled on the tenant" -ForegroundColor red
+        Write-Log -Message "Test failed: Device Registration Service is disabled on the tenant" -Level ERROR
         Write-Host ''
         Write-Host "Recommended action: enable Device Registration Service application on your tenant" -ForegroundColor Yellow
         Write-Log -Message "Recommended action: enable Device Registration Service application on your tenant"
@@ -319,8 +319,8 @@ Function Test-DevRegApp{
        Write-Host "Test passed: Device Registration Service is enabled on the tenant" -ForegroundColor Green 
        Write-Log -Message "Test passed: Device Registration Service is enabled on the tenant"
     }else{
-        Write-Host "Test failed: Deice Registration Service is disabled on the tenant" -ForegroundColor red
-        Write-Log -Message "Test failed: Deice Registration Service is disabled on the tenant" -Level ERROR
+        Write-Host "Test failed: Device Registration Service is disabled on the tenant" -ForegroundColor red
+        Write-Log -Message "Test failed: Device Registration Service is disabled on the tenant" -Level ERROR
         Write-Host ''
         Write-Host "Recommended action: enable Device Registration Service application on your tenant" -ForegroundColor Yellow
         Write-Log -Message "Recommended action: enable Device Registration Service application on your tenant"
@@ -460,8 +460,8 @@ Function SyncJoinCheck($Fallback){
     #Checking if device synced
     ConnecttoAzureAD
     Write-Host ''
-    Write-Host "Testing if the device synced to Azure AD..." -ForegroundColor Yellow
-    Write-Log -Message "Testing if the device synced to Azure AD..."
+    Write-Host "Testing if the device synced to Microsoft Entra ID..." -ForegroundColor Yellow
+    Write-Log -Message "Testing if the device synced to Microsoft Entra ID..."
     $headers = @{ 
                 'Content-Type'  = "application\json"
                 'Authorization' = "Bearer $global:accesstoken"
@@ -471,18 +471,18 @@ Function SyncJoinCheck($Fallback){
     $AADDevice=$GraphResult.Content | ConvertFrom-Json
     if($AADDevice.value.Count -ge 1){
         #The device existing in AAD:
-        Write-Host "Test passed: the device object exists on Azure AD" -ForegroundColor Green
-        Write-Log -Message "Test passed: the device object exists on Azure AD"
+        Write-Host "Test passed: the device object exists on Microsoft Entra ID" -ForegroundColor Green
+        Write-Log -Message "Test passed: the device object exists on Microsoft Entra ID"
     }else{
         #Device does not exist:
         ###Reregister device to AAD
-        Write-Host "Test failed: the device does not exist in your Azure AD tenant" -ForegroundColor Red
-        Write-Log -Message "Test failed: the device does not exist in your Azure AD tenant" -Level ERROR
+        Write-Host "Test failed: the device does not exist in your Microsoft Entra tenant" -ForegroundColor Red
+        Write-Log -Message "Test failed: the device does not exist in your Microsoft Entra tenant" -Level ERROR
         $DeviceDN = ((([adsisearcher]"(&(name=$env:computername)(objectClass=computer))").findall().path).tostring() -split "LDAP://")[1].trim()
         Write-Host ''
-        Write-Host "Recommended action: Make sure the device is in the sync scope, and it is successfully exported to Azure AD by Azure AD Connect." -ForegroundColor Yellow
+        Write-Host "Recommended action: Make sure the device is in the sync scope, and it is successfully synced to Microsoft Entra ID by Microsoft Entra Connect." -ForegroundColor Yellow
         Write-Host "Device DN: $DeviceDN" -ForegroundColor Yellow
-        Write-Log -Message "Recommended action: Make sure the device is in the sync scope, and it is successfully exported to Azure AD by Azure AD Connect.`n                                 Device DN: $DeviceDN"
+        Write-Log -Message "Recommended action: Make sure the device is in the sync scope, and it is successfully synced to Microsoft Entra ID by Microsoft Entra Connect.`n                                 Device DN: $DeviceDN"
         Write-Host ''
         Write-Host ''
         Write-Host "Script completed successfully." -ForegroundColor Green
@@ -545,25 +545,25 @@ Function CheckPRT{
     if ($DJ -eq 'YES'){
         #Check if the device is hybrid
         Write-Host ''
-        Write-Host "Testing if the device is Hybrid Azure AD joined..." -ForegroundColor Yellow
-        Write-Log -Message "Testing if the device is Hybrid Azure AD joined..."
+        Write-Host "Testing if the device is Microsoft Entra hybrid joined..." -ForegroundColor Yellow
+        Write-Log -Message "Testing if the device is Microsoft Entra hybrid joined..."
         $AADJ = $DSReg | Select-String AzureAdJoined
         $AADJ = ($AADJ.tostring() -split ":")[1].trim()
         if ($AADJ -eq 'YES'){
             #The device is hybrid
             $hostname = hostname
-            Write-Host $hostname "device is Hybrid Azure AD joined" -ForegroundColor Green
-            Write-Log -Message "$hostname device is Hybrid Azure AD joined"
+            Write-Host $hostname "device is Microsoft Entra hybrid joined" -ForegroundColor Green
+            Write-Log -Message "$hostname device is Microsoft Entra hybrid joined"
             #CheckPRT value
             Write-Host ''
-            Write-Host "Testing Azure AD PRT..." -ForegroundColor Yellow
-            Write-Log -Message "Testing Azure AD PRT..."
+            Write-Host "Testing Primary Refresh Token (PRT)..." -ForegroundColor Yellow
+            Write-Log -Message "Testing Primary Refresh Token (PRT)..."
             $ADPRT = $DSReg | Select-String AzureAdPrt | select-object -First 1
             $ADPRT = ($ADPRT.tostring() -split ":")[1].Trim()
             if ($ADPRT -eq 'YES'){
                 #PRT is available
-                Write-Host "Test passed: Azure AD PRT is available on this device for the looged on user" -ForegroundColor Green
-                Write-Log -Message "Test passed: Azure AD PRT is available on this device for the looged on user"
+                Write-Host "Test passed: Primary Refresh Token (PRT) is available on this device for the looged on user" -ForegroundColor Green
+                Write-Log -Message "Test passed: Primary Refresh Token (PRT) is available on this device for the looged on user"
                 CheckePRT
                 Write-Host ''
                 Write-Host ''
@@ -573,8 +573,8 @@ Function CheckPRT{
                 Write-Host ''
             }else{
                 #PRT not available
-                Write-Host "Test failed: Azure AD PRT is not available. Hence SSO will not work, and the device may be blocked if you have a device-based Conditional Access Policy" -ForegroundColor Red
-                Write-Log -Message "Test failed: Azure AD PRT is not available. Hence SSO will not work, and the device may be blocked if you have a device-based Conditional Access Policy" -Level ERROR
+                Write-Host "Test failed: Primary Refresh Token (PRT) is not available. Hence SSO will not work, and the device may be blocked if you have a device-based Conditional Access Policy" -ForegroundColor Red
+                Write-Log -Message "Test failed: Primary Refresh Token (PRT) is not available. Hence SSO will not work, and the device may be blocked if you have a device-based Conditional Access Policy" -Level ERROR
                 Write-Host ''
                 Write-Host "Recommended action: lock the device and unlock it and run the script again. If the issue remains, collect the logs and send them to MS support" -ForegroundColor Yellow
                 Write-Log -Message "Recommended action: lock the device and unlock it and run the script again. If the issue remains, collect the logs and send them to MS support"
@@ -589,24 +589,24 @@ Function CheckPRT{
             }
         }else{
             $hostname = hostname
-            Write-Host $hostname "device is NOT Hybrid Azure AD joined" -ForegroundColor Yellow
-            Write-Log -Message "$hostname device is NOT Hybrid Azure AD joined"
+            Write-Host $hostname "device is NOT Microsoft Entra hybrid joined" -ForegroundColor Yellow
+            Write-Log -Message "$hostname device is NOT Microsoft Entra hybrid joined"
             #Check WPJ
             Write-Host ''
-            Write-Host "Testing if the device is Azure AD Registered..." -ForegroundColor Yellow
-            Write-Log -Message "Testing if the device is Azure AD Registered..."
+            Write-Host "Testing if the device is Microsoft Entra Registered..." -ForegroundColor Yellow
+            Write-Log -Message "Testing if the device is Microsoft Entra Registered..."
             $WPJ = $DSReg | Select-String WorkplaceJoined | Select-Object -First 1
             $WPJ = ($WPJ.tostring() -split ":")[1].trim()
             if ($WPJ -eq 'YES'){
                 $hostname = hostname
-                Write-Host $hostname "device is Azure AD Registered" -ForegroundColor Green
-                Write-Log -Message "$hostname device is Azure AD Registered"
+                Write-Host $hostname "device is Microsoft Entra Registered" -ForegroundColor Green
+                Write-Log -Message "$hostname device is Microsoft Entra Registered"
                 #Device is WPJ, check the registry
                 Write-Host ''
-                Write-Host "Testing Azure AD PRT registry value..." -ForegroundColor Yellow
+                Write-Host "Testing Primary Refresh Token (PRT) registry value..." -ForegroundColor Yellow
                 if ((Get-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\https://login.microsoftonline.com -ErrorAction SilentlyContinue).PSPath){
-                    Write-Host "Test passed: Azure AD PRT registry value exists for the looged on user" -ForegroundColor Green
-                    Write-Log -Message "Test passed: Azure AD PRT registry value exists for the looged on user"
+                    Write-Host "Test passed: Primary Refresh Token (PRT) registry value exists for the looged on user" -ForegroundColor Green
+                    Write-Log -Message "Test passed: Primary Refresh Token (PRT) registry value exists for the looged on user"
                     Write-Host ''
                     Write-Host ''
                     Write-Host "Script completed successfully." -ForegroundColor Green
@@ -614,11 +614,11 @@ Function CheckPRT{
                     Write-Host ''
                     Write-Host ''
                     }else{
-                    Write-Host "Test failed: Azure AD PRT registry value does not exist for the looged on user" -ForegroundColor Red
-                    Write-Log -Message "Test failed: Azure AD PRT registry value does not exist for the looged on user" -Level ERROR
+                    Write-Host "Test failed: Primary Refresh Token (PRT) registry value does not exist for the looged on user" -ForegroundColor Red
+                    Write-Log -Message "Test failed: Primary Refresh Token (PRT) registry value does not exist for the looged on user" -Level ERROR
                     Write-Host ''
-                    Write-Host "Recommended action: Disconnect the device from Azure AD form 'settings > Accounts > Access work or school' and then connect it again to Azure AD" -ForegroundColor Yellow
-                    Write-Log -Message "Recommended action: Disconnect the device from Azure AD form 'settings > Accounts > Access work or school' and then connect it again to Azure AD"
+                    Write-Host "Recommended action: Disconnect the device from Microsoft Entra ID form 'settings > Accounts > Access work or school' and then connect it again to Microsoft Entra ID" -ForegroundColor Yellow
+                    Write-Log -Message "Recommended action: Disconnect the device from Microsoft Entra ID form 'settings > Accounts > Access work or school' and then connect it again to Microsoft Entra ID"
                     Write-Host ''
                     Write-Host ''
                     Write-Host "Script completed successfully." -ForegroundColor Green
@@ -629,14 +629,14 @@ Function CheckPRT{
                 }
             }else{
                 $hostname = hostname
-                Write-Host $hostname "device is NOT Azure AD Registered" -ForegroundColor Yellow
-                Write-Log -Message "$hostname device is NOT Azure AD Registered"
+                Write-Host $hostname "device is NOT Microsoft Entra Registered" -ForegroundColor Yellow
+                Write-Log -Message "$hostname device is NOT Microsoft Entra Registered"
                 Write-Host ''
-                Write-Host "Test failed:" $hostname "device is NOT connected to Azure AD, hence PRT does not exist" -ForegroundColor Red
-                Write-Log -Message "Test failed: $hostname device is NOT connected to Azure AD, hence PRT does not exist" -Level ERROR
+                Write-Host "Test failed:" $hostname "device is NOT connected to Microsoft Entra ID, hence PRT does not exist" -ForegroundColor Red
+                Write-Log -Message "Test failed: $hostname device is NOT connected to Microsoft Entra ID, hence PRT does not exist" -Level ERROR
                 Write-Host ''
-                Write-Host "Recommended action: make sure the device is connected to Azure AD to get Azure AD PRT" -ForegroundColor Yellow
-                Write-Log -Message "Recommended action: make sure the device is connected to Azure AD to get Azure AD PRT"
+                Write-Host "Recommended action: make sure the device is connected to Microsoft Entra ID to get Primary Refresh Token (PRT)" -ForegroundColor Yellow
+                Write-Log -Message "Recommended action: make sure the device is connected to Microsoft Entra ID to get Primary Refresh Token (PRT)"
                 Write-Host ''
                 Write-Host ''
                 Write-Host "Script completed successfully." -ForegroundColor Green
@@ -649,25 +649,25 @@ Function CheckPRT{
     }else{
         #Check if the device AADJ
         Write-Host ''
-        Write-Host "Testing if the device is Azure AD Joined..." -ForegroundColor Yellow
-        Write-Log -Message "Testing if the device is Azure AD Joined..."
+        Write-Host "Testing if the device is Microsoft Entra join..." -ForegroundColor Yellow
+        Write-Log -Message "Testing if the device is Microsoft Entra join..."
         $AADJ = $DSReg | Select-String AzureAdJoined
         $AADJ = ($AADJ.tostring() -split ":")[1].trim()
         if ($AADJ -eq 'YES'){
             #The device AADJ
             $hostname = hostname
-            Write-Host $hostname "device is Azure AD joined" -ForegroundColor Green
-            Write-Log -Message "$hostname device is Azure AD joined"
+            Write-Host $hostname "device is Microsoft Entra join" -ForegroundColor Green
+            Write-Log -Message "$hostname device is Microsoft Entra join"
             #CheckPRT value
             Write-Host ''
-            Write-Host "Testing Azure AD PRT..." -ForegroundColor Yellow
-            Write-Log -Message "Testing Azure AD PRT..."
+            Write-Host "Testing Primary Refresh Token (PRT)..." -ForegroundColor Yellow
+            Write-Log -Message "Testing Primary Refresh Token (PRT)..."
             $ADPRT = $DSReg | Select-String AzureAdPrt | select-object -First 1
             $ADPRT = ($ADPRT.tostring() -split ":")[1].Trim()
             if ($ADPRT -eq 'YES'){
                 #PRT is available
-                Write-Host "Test passed: Azure AD PRT is available on this device for the looged on user" -ForegroundColor Green
-                Write-Log -Message "Test passed: Azure AD PRT is available on this device for the looged on user" 
+                Write-Host "Test passed: Primary Refresh Token (PRT) is available on this device for the looged on user" -ForegroundColor Green
+                Write-Log -Message "Test passed: Primary Refresh Token (PRT) is available on this device for the looged on user" 
                 Write-Host ''
                 Write-Host ''
                 Write-Host "Script completed successfully." -ForegroundColor Green
@@ -676,8 +676,8 @@ Function CheckPRT{
                 Write-Host ''
             }else{
                 #PRT not available
-                Write-Host "Test failed: Azure AD PRT is not available. Hence SSO will not work, and the device may be blocked if you have a device-based Conditional Access Policy" -ForegroundColor Red
-                Write-Log -Message "Test failed: Azure AD PRT is not available. Hence SSO will not work, and the device may be blocked if you have a device-based Conditional Access Policy"
+                Write-Host "Test failed: Primary Refresh Token (PRT) is not available. Hence SSO will not work, and the device may be blocked if you have a device-based Conditional Access Policy" -ForegroundColor Red
+                Write-Log -Message "Test failed: Primary Refresh Token (PRT) is not available. Hence SSO will not work, and the device may be blocked if you have a device-based Conditional Access Policy"
                 Write-Host ''
                 Write-Host "Recommended action: lock the device and unlock it and run the script again. If the issue remains, collect the logs and send them to MS support" -ForegroundColor Yellow
                 Write-Log -Message "Recommended action: lock the device and unlock it and run the script again. If the issue remains, collect the logs and send them to MS support"
@@ -691,37 +691,37 @@ Function CheckPRT{
             }
         }else{
             $hostname = hostname
-            Write-Host $hostname "device is NOT Azure AD joined" -ForegroundColor Yellow
-            Write-Log -Message "$hostname device is NOT Azure AD joined"
+            Write-Host $hostname "device is NOT Microsoft Entra join" -ForegroundColor Yellow
+            Write-Log -Message "$hostname device is NOT Microsoft Entra join"
             #Check WPJ
             Write-Host ''
-            Write-Host "Testing if the device is Azure AD Registered..." -ForegroundColor Yellow
-            Write-Log -Message "Testing if the device is Azure AD Registered..."
+            Write-Host "Testing if the device is Microsoft Entra Registered..." -ForegroundColor Yellow
+            Write-Log -Message "Testing if the device is Microsoft Entra Registered..."
             $WPJ = $DSReg | Select-String WorkplaceJoined
             $WPJ = ($WPJ.tostring() -split ":")[1].trim()
             if ($WPJ -eq 'YES'){
                 #Device is WPJ, check the registry
                 $hostname = hostname
-                Write-Host $hostname "device is Azure AD Registered" -ForegroundColor Green
-                Write-Log -Message "$hostname device is Azure AD Registered"
+                Write-Host $hostname "device is Microsoft Entra Registered" -ForegroundColor Green
+                Write-Log -Message "$hostname device is Microsoft Entra Registered"
                 #check registry
                 Write-Host ''
-                Write-Host "Testing Azure AD PRT registry value..." -ForegroundColor Yellow
-                Write-Log -Message "Testing Azure AD PRT registry value..."
+                Write-Host "Testing Primary Refresh Token (PRT) registry value..." -ForegroundColor Yellow
+                Write-Log -Message "Testing Primary Refresh Token (PRT) registry value..."
                 if ((Get-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\https://login.microsoftonline.com -ErrorAction SilentlyContinue).PSPath){
-                    Write-Host "Test passed: Azure AD PRT registry value exists for the looged on user" -ForegroundColor Green
-                    Write-Log -Message "Test passed: Azure AD PRT registry value exists for the looged on user"
+                    Write-Host "Test passed: Primary Refresh Token (PRT) registry value exists for the looged on user" -ForegroundColor Green
+                    Write-Log -Message "Test passed: Primary Refresh Token (PRT) registry value exists for the looged on user"
                     Write-Host ''
                     Write-Host ''
                     Write-Host "Script completed successfully." -ForegroundColor Green
                     Write-Log -Message "Script completed successfully."
                     Write-Host ''
                 }else{
-                    Write-Host "Test failed: Azure AD PRT registry value does not exist for the looged on user" -ForegroundColor Red
-                    Write-Log -Message "Test failed: Azure AD PRT registry value does not exist for the looged on user" -Level ERROR
+                    Write-Host "Test failed: Primary Refresh Token (PRT) registry value does not exist for the looged on user" -ForegroundColor Red
+                    Write-Log -Message "Test failed: Primary Refresh Token (PRT) registry value does not exist for the looged on user" -Level ERROR
                     Write-Host ''
-                    Write-Host "Recommended action: Disconnect the device from Azure AD form 'settings > Accounts > Access work or school' and then connect it again to Azure AD" -ForegroundColor Yellow
-                    Write-Log -Message "Recommended action: Disconnect the device from Azure AD form 'settings > Accounts > Access work or school' and then connect it again to Azure AD"
+                    Write-Host "Recommended action: Disconnect the device from Microsoft Entra ID form 'settings > Accounts > Access work or school' and then connect it again to Microsoft Entra ID" -ForegroundColor Yellow
+                    Write-Log -Message "Recommended action: Disconnect the device from Microsoft Entra ID form 'settings > Accounts > Access work or school' and then connect it again to Microsoft Entra ID"
                     Write-Host ''
                     Write-Host ''
                     Write-Host "Script completed successfully." -ForegroundColor Green
@@ -732,13 +732,13 @@ Function CheckPRT{
                 }
             }else{
                 $hostname = hostname
-                Write-Host $hostname "device is NOT Azure AD Registered" -ForegroundColor Yellow
-                Write-Log -Message "$hostname device is NOT Azure AD Registered"
-                Write-Host "Test failed:" $hostname "device is NOT connected to Azure AD, hence PRT does not exist" -ForegroundColor Red
-                Write-Log -Message "Test failed: $hostname device is NOT connected to Azure AD, hence PRT does not exist"
+                Write-Host $hostname "device is NOT Microsoft Entra Registered" -ForegroundColor Yellow
+                Write-Log -Message "$hostname device is NOT Microsoft Entra Registered"
+                Write-Host "Test failed:" $hostname "device is NOT connected to Microsoft Entra ID, hence PRT does not exist" -ForegroundColor Red
+                Write-Log -Message "Test failed: $hostname device is NOT connected to Microsoft Entra ID, hence PRT does not exist"
                 Write-Host ''
-                Write-Host "Recommended action: make sure the device is connected to Azure AD to get Azure PRT" -ForegroundColor Yellow
-                Write-Log -Message "Recommended action: make sure the device is connected to Azure AD to get Azure PRT"
+                Write-Host "Recommended action: make sure the device is connected to Microsoft Entra ID to get Azure PRT" -ForegroundColor Yellow
+                Write-Log -Message "Recommended action: make sure the device is connected to Microsoft Entra ID to get Azure PRT"
                 Write-Host ''
                 Write-Host ''
                 Write-Host "Script completed successfully." -ForegroundColor Green
@@ -825,15 +825,15 @@ Function WPJTS{
     $hostname=hostname
     #Checking if the device connected to AzureAD
     Write-Host ''
-    Write-Host "Testing if the device is Azure AD Registered..." -ForegroundColor Yellow
-    Write-Log -Message "Testing if the device is Azure AD Registered..."
+    Write-Host "Testing if the device is Microsoft Entra Registered..." -ForegroundColor Yellow
+    Write-Log -Message "Testing if the device is Microsoft Entra Registered..."
     $WPJ = $DSReg | Select-String WorkplaceJoined | Select-Object -First 1
     $WPJ = ($WPJ.tostring() -split ":")[1].trim()
     if ($WPJ -ne "YES"){
         #The device is not connected to AAD:
         ### perform WPJ (all other tests should be here)
-        Write-Host "Test failed:" $hostname "device is NOT connected to Azure AD as Azure AD Registered device" -ForegroundColor Red
-        Write-Log -Message "Test failed: $hostname device is NOT connected to Azure AD as Azure AD Registered device"
+        Write-Host "Test failed:" $hostname "device is NOT connected to Microsoft Entra ID as Microsoft Entra Registered device" -ForegroundColor Red
+        Write-Log -Message "Test failed: $hostname device is NOT connected to Microsoft Entra ID as Microsoft Entra Registered device"
     
         #Checking Internet connectivity
         Test-DevRegConnectivity-User $true | out-null
@@ -842,8 +842,8 @@ Function WPJTS{
         Test-DevRegApp
         Write-Host ''
         Write-Host ''
-        Write-Host "All tests completed successfully. You can start registering your device to Azure AD." -ForegroundColor Green
-        Write-Log -Message "All tests completed successfully. You can start registering your device to Azure AD."
+        Write-Host "All tests completed successfully. You can start registering your device to Microsoft Entra ID." -ForegroundColor Green
+        Write-Log -Message "All tests completed successfully. You can start registering your device to Microsoft Entra ID."
         Write-Host ''
         Write-Host ''
         exit
@@ -852,8 +852,8 @@ Function WPJTS{
         $TenantName = $DSReg | Select-String WorkplaceTenantName
         $TenantName =($TenantName.tostring() -split ":")[1].trim()
         $hostname = hostname
-        Write-Host "Test passed:" $hostname "device is connected to Azure AD tenant:" $TenantName "as Azure AD Register device" -ForegroundColor Green
-        Write-Log -Message "Test passed: $hostname device is connected to Azure AD tenant: $TenantName as Azure AD Register device"
+        Write-Host "Test passed:" $hostname "device is connected to Microsoft Entra tenant:" $TenantName "as Microsoft Entra Registered device" -ForegroundColor Green
+        Write-Log -Message "Test passed: $hostname device is connected to Microsoft Entra tenant: $TenantName as Microsoft Entra Registered device"
     }
 
     #Check the device status on AAD:
@@ -863,8 +863,8 @@ Function WPJTS{
 
     Write-Host ''
     Write-Host ''
-    Write-Host "The device is connected to Azure AD as Azure AD Registered device, and it is in healthy state." -ForegroundColor Green
-    Write-Log -Message "The device is connected to Azure AD as Azure AD Registered device, and it is in healthy state."
+    Write-Host "The device is connected to Microsoft Entra ID as Microsoft Entra Registered device, and it is in healthy state." -ForegroundColor Green
+    Write-Log -Message "The device is connected to Microsoft Entra ID as Microsoft Entra Registered device, and it is in healthy state."
     Write-Host ''
     Write-Host ''
     Write-Host "Script completed successfully." -ForegroundColor Green
@@ -953,15 +953,15 @@ Function AADJ{
 
     #Checking if the device connected to AzureAD
     ''
-    Write-Host "Testing if the device is joined to Azure AD..." -ForegroundColor Yellow
-    Write-Log -Message "Testing if the device is joined to Azure AD..."
+    Write-Host "Testing if the device is joined to Microsoft Entra ID..." -ForegroundColor Yellow
+    Write-Log -Message "Testing if the device is joined to Microsoft Entra ID..."
     $AADJ = $DSReg | Select-String AzureAdJoined
     $AADJ = ($AADJ.tostring() -split ":")[1].trim()
     if ($AADJ -ne "YES"){
         #The device is not connected to AAD:
         ### perform AADJ (all other tests should be here)
-        Write-Host "Test failed:" $hostname "device is NOT connected to Azure AD" -ForegroundColor Red
-        Write-Log -Message "Test failed: $hostname device is NOT connected to Azure AD"
+        Write-Host "Test failed:" $hostname "device is NOT connected to Microsoft Entra ID" -ForegroundColor Red
+        Write-Log -Message "Test failed: $hostname device is NOT connected to Microsoft Entra ID"
 
         <##Checking if the user is bulitin admin
         Write-Host ''
@@ -999,8 +999,8 @@ Function AADJ{
             Write-Host "Test failed: the signed in user does NOT have local admin permissions" -ForegroundColor Red
             Write-Log -Message "Test failed: the signed in user does NOT have local admin permissions" -Level ERROR
             Write-Host ''
-            Write-Host "Recommended action: sign in with a user that has local admin permissions before you start joining the device to Azure AD to finish the setup" -ForegroundColor Yellow
-            Write-Log -Message "Recommended action: sign in with a user that has local admin permissions before you start joining the device to Azure AD to finish the setup"
+            Write-Host "Recommended action: sign in with a user that has local admin permissions before you start joining the device to Microsoft Entra ID to finish the setup" -ForegroundColor Yellow
+            Write-Log -Message "Recommended action: sign in with a user that has local admin permissions before you start joining the device to Microsoft Entra ID to finish the setup"
             Write-Host ''
             Write-Host ''
             Write-Host "Script completed successfully." -ForegroundColor Green
@@ -1018,18 +1018,18 @@ Function AADJ{
         Test-DevRegApp
         Write-Host ''
         Write-Host ''
-        Write-Host "All tests completed successfully. You can start joining your device to Azure AD." -ForegroundColor Green
-        Write-Log -Message "All tests completed successfully. You can start joining your device to Azure AD."
+        Write-Host "All tests completed successfully. You can start joining your device to Microsoft Entra ID." -ForegroundColor Green
+        Write-Log -Message "All tests completed successfully. You can start joining your device to Microsoft Entra ID."
         Write-Host ''
         Write-Host ''
         exit
     }else{
-        #The device is Azure AD join
+        #The device is Microsoft Entra join
         $TenantName = $DSReg | Select-String TenantName | Select-Object -first 1
         $TenantName =($TenantName.tostring() -split ":")[1].trim()
         $hostname = hostname
-        Write-Host "Test passed:" $hostname "device is joined to Azure AD tenant:" $TenantName -ForegroundColor Green
-        Write-Log -Message "Test passed: $hostname device is joined to Azure AD tenant: $TenantName"
+        Write-Host "Test passed:" $hostname "device is joined to Microsoft Entra tenant:" $TenantName -ForegroundColor Green
+        Write-Log -Message "Test passed: $hostname device is joined to Microsoft Entra tenant: $TenantName"
     }
 
     #CheckMSOnline
@@ -1041,8 +1041,8 @@ Function AADJ{
 
     Write-Host ''
     Write-Host ''
-    Write-Host "The device is connected to Azure AD as Azure AD joined device, and it is in healthy state" -ForegroundColor Green
-    Write-Log -Message "The device is connected to Azure AD as Azure AD joined device, and it is in healthy state"
+    Write-Host "The device is connected to Microsoft Entra ID as Microsoft Entra joined device, and it is in healthy state" -ForegroundColor Green
+    Write-Log -Message "The device is connected to Microsoft Entra ID as Microsoft Entra joined device, and it is in healthy state"
     Write-Host ''
     Write-Host ''
     Write-Host "Script completed successfully." -ForegroundColor Green
@@ -1536,6 +1536,7 @@ Function CollectAdditionalLogs{
     $DeviceInfo | Out-File "$global:LogsPath\DeviceInfo.txt"
     
     (schtasks.exe /query /v 2>&1) | Out-File "$global:LogsPath\Task-Scheduler.txt"
+    Get-ItemProperty -Path 'Registry::HKLM\Software\Microsoft\Windows NT\CurrentVersion' | Out-File "$global:LogsPath\Build.txt"
 }
 
 Function LogsCollection{
@@ -1575,11 +1576,12 @@ Function LogsCollection{
 
     $global:LogsPath=$pwd.Path+"\DSRegToolLogs"
     $global:PreTraceEvents = "Microsoft-Windows-AAD/Operational","Microsoft-Windows-User Device Registration/Admin","Microsoft-Windows-CAPI2/Operational","Microsoft-Windows-HelloForBusiness/Operational","Microsoft-Windows-LiveId/Operational","Microsoft-Windows-User Control Panel/Operational","Microsoft-Windows-WebAuth/Operational","Microsoft-Windows-WebAuthN/Operational","Microsoft-Windows-Biometrics/Operational","Microsoft-Windows-IdCtrls/Operational","Microsoft-Windows-Crypto-DPAPI/Operational"
-    $global:DebugLogs="Microsoft-Windows-AAD/Analytic","Microsoft-Windows-User Device Registration/Debug"
-    $global:Events = $global:PreTraceEvents + "Microsoft-Windows-AAD/Analytic","Microsoft-Windows-User Device Registration/Debug","System","Application","Microsoft-Windows-Shell-Core/Operational","Microsoft-Windows-Kerberos/Operational","Microsoft-Windows-CertPoleEng/Operational","Microsoft-Windows-Authentication/AuthenticationPolicyFailures-DomainController","Microsoft-Windows-Authentication/ProtectedUser-Client","Microsoft-Windows-Authentication/ProtectedUserFailures-DomainController","Microsoft-Windows-Authentication/ProtectedUserSuccesses-DomainController","Microsoft-Windows-WMI-Activity/Operational","Microsoft-Windows-GroupPolicy/Operational"
+    $global:DebugLogs="Microsoft-Windows-AAD/Analytic","Microsoft-Windows-User Device Registration/Debug", "Microsoft-Windows-AADRT/Admin"
+    $global:Events = $global:PreTraceEvents + "Microsoft-Windows-AAD/Analytic","Microsoft-Windows-User Device Registration/Debug","System","Application","Microsoft-Windows-Shell-Core/Operational","Microsoft-Windows-Kerberos/Operational","Microsoft-Windows-CertPoleEng/Operational","Microsoft-Windows-Authentication/AuthenticationPolicyFailures-DomainController","Microsoft-Windows-Authentication/ProtectedUser-Client","Microsoft-Windows-Authentication/ProtectedUserFailures-DomainController","Microsoft-Windows-Authentication/ProtectedUserSuccesses-DomainController","Microsoft-Windows-WMI-Activity/Operational","Microsoft-Windows-GroupPolicy/Operational","Microsoft-Windows-LAPS/Operational"
 
     $global:RegKeys = 'ipconfig /all > ipconfig-all.txt',`
     'dsregcmd /status > dsregcmd-status.txt',`
+    'dsregcmd /status > dsregcmd.txt',`
     '[environment]::OSVersion | fl * > Winver.txt',`
     'netstat -nao > netstat-nao.txt',`
     'route print > route-print.txt',`
@@ -1591,12 +1593,19 @@ Function LogsCollection{
     'regedit /e Lsa.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa',`
     'regedit /e Netlogon.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netlogon',`
     'regedit /e Schannel.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL',`
+    'regedit /e StrongCrypto.txt HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\.NETFramework\v4.0.30319',`
     'regedit /e Winlogon.txt HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon',`
+
     'regedit /e Winlogon-current-control-set.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Winlogon',`
     'regedit /e IdentityStore.txt HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\IdentityStore',`
     'regedit /e WorkplaceJoin-windows.txt HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WorkplaceJoin',`
     'regedit /e WorkplaceJoin-control.txt HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\WorkplaceJoin',`
-    'regedit /e WPJ-info.txt HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AAD'
+    'regedit /e WPJ-info.txt HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AAD',`
+
+    'regedit /e LAPS_SCP.txt HKEY_LOCAL_MACHINE\Software\Microsoft\Policies\LAPS',`
+    'regedit /e LAPS_GPO.txt HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\LAPS',`
+    'regedit /e LAPS_LocalConfig.txt HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\LAPS\Config',`
+    'regedit /e LAPS_Legacy.txt HKEY_LOCAL_MACHINE\Software\Policies\Microsoft Services\AdmPwd'
 
     $global:AADExt='set > set.txt',`
     'sc query  > services-config.txt',`    'md AADExtention',`    'curl https://login.microsoftonline.com/ -D - > .\AADExtention\login.microsoftonline.com.txt 2>&0',`    'curl https://enterpriseregistration.windows.net/ -D - > .\AADExtention\enterpriseregistration.windows.net.txt 2>&0',`    'curl https://device.login.microsoftonline.com/ -D - > .\AADExtention\device.login.microsoftonline.com.txt 2>&0',`    'curl https://pas.windows.net/ -D - > .\AADExtention\pas.windows.net.txt 2>&0',`    'xcopy C:\WindowsAzure\Logs\Plugins\Microsoft.Azure.ActiveDirectory.AADLoginForWindows .\AADExtention\Microsoft.Azure.ActiveDirectory.AADLoginForWindows /E /H /C /I 2>&0 > null'
@@ -1611,8 +1620,8 @@ $statuscode = (Invoke-WebRequest -Uri https://adminwebservice.microsoftonline.co
     if ($statuscode -ne 200){
         Write-Host ''
         Write-Host ''
-        Write-Host "Operation aborted. Unable to connect to Azure AD." -ForegroundColor red
-        Write-Log -Message "Operation aborted. Unable to connect to Azure AD."
+        Write-Host "Operation aborted. Unable to connect to Microsoft Entra ID." -ForegroundColor red
+        Write-Log -Message "Operation aborted. Unable to connect to Microsoft Entra ID."
         Write-Host ''
         Write-Host "Recommended action: Please check your internet connection." -ForegroundColor Yellow
         Write-Log -Message "Recommended action: Please check your internet connection." -Level ERROR
@@ -1776,7 +1785,7 @@ Function CheckCert ([String] $DeviceID, [String] $DeviceThumbprint){
         }else{
             Write-Host "The certificate has expired." -ForegroundColor Red
             Write-Host ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again." -ForegroundColor Yellow
             Write-Host ''
             Write-Host ''
             Write-Host "Script completed successfully." -ForegroundColor Green
@@ -1790,7 +1799,7 @@ Function CheckCert ([String] $DeviceID, [String] $DeviceThumbprint){
         if (($DeviceID -ne $CertDNSName.Punycode) -or ($DeviceID -ne $CertDNSName.Unicode)){
             Write-Host "The certificate subject is not correct." -ForegroundColor Red
             Write-Host ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again." -ForegroundColor Yellow
             Write-Host ''
             Write-Host ''
             Write-Host "Script completed successfully." -ForegroundColor Green
@@ -1805,7 +1814,7 @@ Function CheckCert ([String] $DeviceID, [String] $DeviceThumbprint){
         if (($IssuerName.Name -ne "DC=net + DC=windows + CN=MS-Organization-Access + OU=82dbaca4-3e81-46ca-9c73-0950c1eaca97") -or ($Issuer -ne "DC=net + DC=windows + CN=MS-Organization-Access + OU=82dbaca4-3e81-46ca-9c73-0950c1eaca97")){
             Write-Host "Certificate Issuer is not configured correctly." -ForegroundColor Red
             Write-Host ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again." -ForegroundColor Yellow
             Write-Host ''
             Write-Host ''
             Write-Host "Script completed successfully." -ForegroundColor Green
@@ -1820,7 +1829,7 @@ Function CheckCert ([String] $DeviceID, [String] $DeviceThumbprint){
         if ($Algorithm.FriendlyName -ne "sha256RSA"){
             Write-Host "Certificate Algorithm is not configured correctly." -ForegroundColor Red
             Write-Host ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again." -ForegroundColor Yellow
             Write-Host ''
             Write-Host ''
             Write-Host "Script completed successfully." -ForegroundColor Green
@@ -1835,7 +1844,7 @@ Function CheckCert ([String] $DeviceID, [String] $DeviceThumbprint){
         if ($Algorithm.Value -ne "1.2.840.113549.1.1.11"){
             Write-Host "Certificate Algorithm Value is not configured correctly." -ForegroundColor Red
             Write-Host ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again." -ForegroundColor Yellow
             Write-Host ''
             Write-Host ''
             Write-Host "Script completed successfully." -ForegroundColor Green
@@ -1850,7 +1859,7 @@ Function CheckCert ([String] $DeviceID, [String] $DeviceThumbprint){
         if ($HasPrivateKey -ne "True"){
             Write-Host "Certificate PrivateKey does not exist." -ForegroundColor Red
             Write-Host ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again." -ForegroundColor Yellow
             Write-Host ''
             Write-Host ''
             Write-Host "Script completed successfully." -ForegroundColor Green
@@ -1865,7 +1874,7 @@ Function CheckCert ([String] $DeviceID, [String] $DeviceThumbprint){
         #Certificate does not exist.
         Write-Host "Device certificate does not exist." -ForegroundColor Red
         Write-Host ''
-        Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again." -ForegroundColor Yellow
+        Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again." -ForegroundColor Yellow
         Write-Host ''
         Write-Host ''
         Write-Host "Script completed successfully." -ForegroundColor Green
@@ -1901,8 +1910,8 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
         Write-Host "The certificate has expired" -ForegroundColor Red
         Write-Log -Message "The certificate has expired" -Level ERROR
         Write-Host ''
-        Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again" -ForegroundColor Yellow
-        Write-Log -Message "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again"
+        Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again" -ForegroundColor Yellow
+        Write-Log -Message "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again"
         Write-Host ''
         Write-Host ''
         Write-Host "Script completed successfully." -ForegroundColor Green
@@ -1918,8 +1927,8 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
             Write-Host "The certificate subject is not correct" -ForegroundColor Red
             Write-Log -Message "The certificate subject is not correct" -Level ERROR
             Write-Host ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again" -ForegroundColor Yellow
-            Write-Log -Message "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again"
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again" -ForegroundColor Yellow
+            Write-Log -Message "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again"
             Write-Host ''
             Write-Host ''
             Write-Host "Script completed successfully." -ForegroundColor Green
@@ -1938,8 +1947,8 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
             Write-Host "Certificate Issuer is not configured correctly" -ForegroundColor Red
             Write-Log -Message "Certificate Issuer is not configured correctly" -Level ERROR
             Write-Host ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again" -ForegroundColor Yellow
-            Write-Log -Message "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again"
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again" -ForegroundColor Yellow
+            Write-Log -Message "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again"
             Write-Host ''
             Write-Host ''
             Write-Host "Script completed successfully." -ForegroundColor Green
@@ -1958,8 +1967,8 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
             Write-Host "Certificate Algorithm is not configured correctly" -ForegroundColor Red
             Write-Log -Message "Certificate Algorithm is not configured correctly" -Level ERROR
             Write-Host ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again" -ForegroundColor Yellow
-            Write-Log -Message "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again"
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again" -ForegroundColor Yellow
+            Write-Log -Message "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again"
             Write-Host ''
             Write-Host ''
             Write-Host "Script completed successfully." -ForegroundColor Green
@@ -1977,8 +1986,8 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
             Write-Host "Certificate Algorithm Value is not configured correctly" -ForegroundColor Red
             Write-Log -Message "Certificate Algorithm Value is not configured correctly" -Level ERROR
             Write-Host ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again" -ForegroundColor Yellow
-            Write-Log -Message "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again"
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again" -ForegroundColor Yellow
+            Write-Log -Message "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again"
             Write-Host ''
             Write-Host ''
             Write-Host "Script completed successfully." -ForegroundColor Green
@@ -1997,8 +2006,8 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
             Write-Host "Certificate PrivateKey does not exist" -ForegroundColor Red
             Write-Log -Message "Certificate PrivateKey does not exist" -Level ERROR
             Write-Host ''
-            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again" -ForegroundColor Yellow
-            Write-Log -Message "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again"
+            Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again" -ForegroundColor Yellow
+            Write-Log -Message "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again"
             Write-Host ''
             Write-Host ''
             Write-Host "Script completed successfully." -ForegroundColor Green
@@ -2016,8 +2025,8 @@ Function CheckUserCert ([String] $DeviceID, [String] $DeviceThumbprint){
     Write-Host "Device certificate does not exist" -ForegroundColor Red
     Write-Log -Message "Device certificate does not exist"
     Write-Host ''
-    Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again" -ForegroundColor Yellow
-    Write-Log -Message "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again"
+    Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again" -ForegroundColor Yellow
+    Write-Log -Message "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again"
     Write-Host ''
     Write-Host ''
     Write-Host "Script completed successfully." -ForegroundColor Green
@@ -2209,7 +2218,7 @@ Function CheckDeviceHealth($DID, $skipPendingCheck){
         }
     }catch{
         Write-Host ''
-        Write-Host "Operation aborted. Unable to connect to Azure AD, please check you entered a correct credentials and you have the needed permissions" -ForegroundColor red
+        Write-Host "Operation aborted. Unable to connect to Microsoft Entra ID, please check you entered a correct credentials and you have the needed permissions" -ForegroundColor red
         Write-Host ''
         Write-Host ''
         Write-Host "Script completed successfully." -ForegroundColor Green
@@ -2219,25 +2228,25 @@ Function CheckDeviceHealth($DID, $skipPendingCheck){
     }
 
     Write-Host ''
-    Write-Host "Testing device status on Azure AD..." -ForegroundColor Yellow
-    Write-Log -Message "Testing device status on Azure AD..."
+    Write-Host "Testing device status on Microsoft Entra ID..." -ForegroundColor Yellow
+    Write-Log -Message "Testing device status on Microsoft Entra ID..."
 
     #Check if the device exist:
     ''
-    Write-Host "Testing if device exists on Azure AD..." -ForegroundColor Yellow
-    Write-Log -Message "Testing if device exists on Azure AD..."
+    Write-Host "Testing if device exists on Microsoft Entra ID..." -ForegroundColor Yellow
+    Write-Log -Message "Testing if device exists on Microsoft Entra ID..."
     if ($deviceExists){
         #The device existing in AAD:
-        Write-Host "Test passed: the device object exists on Azure AD" -ForegroundColor Green
-        Write-Log -Message "Test passed: the device object exists on Azure AD"
+        Write-Host "Test passed: the device object exists on Microsoft Entra ID" -ForegroundColor Green
+        Write-Log -Message "Test passed: the device object exists on Microsoft Entra ID"
     }else{
         #Device does not exist:
         ###Rejoin device to AAD
-        Write-Host "Test failed: the device does not exist in your Azure AD tenant" -ForegroundColor Red
-        Write-Log -Message "Test failed: the device does not exist in your Azure AD tenant" -Level ERROR
+        Write-Host "Test failed: the device does not exist in your Microsoft Entra tenant" -ForegroundColor Red
+        Write-Log -Message "Test failed: the device does not exist in your Microsoft Entra tenant" -Level ERROR
         ''
-        Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again. If you have a Managed domain, make sure the device is in the sync scope." -ForegroundColor Yellow
-        Write-Log -Message "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again. If you have a Managed domain, make sure the device is in the sync scope."
+        Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again. If you have a Managed domain, make sure the device is in the sync scope." -ForegroundColor Yellow
+        Write-Log -Message "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again. If you have a Managed domain, make sure the device is in the sync scope."
         ''
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green
@@ -2249,17 +2258,17 @@ Function CheckDeviceHealth($DID, $skipPendingCheck){
 
     #Check if the device is enabled:
     ''
-    Write-Host "Testing if device is enabled on Azure AD..." -ForegroundColor Yellow
-    Write-Log -Message "Testing if device is enabled on Azure AD..."
+    Write-Host "Testing if device is enabled on Microsoft Entra ID..." -ForegroundColor Yellow
+    Write-Log -Message "Testing if device is enabled on Microsoft Entra ID..."
     if ($deviceEnabled){
-        Write-Host "Test passed: the device is enabled on Azure AD tenant" -ForegroundColor Green
-        Write-Log -Message "Test passed: the device is enabled on Azure AD tenant"
+        Write-Host "Test passed: the device is enabled on Microsoft Entra tenant" -ForegroundColor Green
+        Write-Log -Message "Test passed: the device is enabled on Microsoft Entra tenant"
     }else{
-        Write-Host "Test failed: the device is not enabled on Azure AD tenant" -ForegroundColor Red
-        Write-Log -Message "Test failed: the device is not enabled on Azure AD tenant" -Level ERROR
+        Write-Host "Test failed: the device is not enabled on Microsoft Entra tenant" -ForegroundColor Red
+        Write-Log -Message "Test failed: the device is not enabled on Microsoft Entra tenant" -Level ERROR
         ''
-        Write-Host "Recommended action: Enable the device on Azure AD tenant. For more information, visit the link: https://docs.microsoft.com/en-us/azure/active-directory/devices/device-management-azure-portal#enable--disable-an-azure-ad-device." -ForegroundColor Yellow
-        Write-Log -Message "Recommended action: Enable the device on Azure AD tenant. For more information, visit the link: https://docs.microsoft.com/en-us/azure/active-directory/devices/device-management-azure-portal#enable--disable-an-azure-ad-device."
+        Write-Host "Recommended action: Enable the device on Microsoft Entra ID. For more information, visit the link: https://docs.microsoft.com/en-us/azure/active-directory/devices/device-management-azure-portal#enable--disable-an-azure-ad-device." -ForegroundColor Yellow
+        Write-Log -Message "Recommended action: Enable the device on Microsoft Entra ID. For more information, visit the link: https://docs.microsoft.com/en-us/azure/active-directory/devices/device-management-azure-portal#enable--disable-an-azure-ad-device."
         ''
         ''
         Write-Host "Script completed successfully." -ForegroundColor Green
@@ -2275,15 +2284,15 @@ Function CheckDeviceHealth($DID, $skipPendingCheck){
         Write-Host "Testing device PENDING state..." -ForegroundColor Yellow
         Write-Log -Message "Testing device PENDING state..."
         if ($devicePending){
-            Write-Host "Test failed: the device in 'Pending' state on Azure AD." -ForegroundColor Red
-            Write-Log -Message "Test failed: the device in 'Pending' state on Azure AD."
+            Write-Host "Test failed: the device in 'Pending' state on Microsoft Entra ID." -ForegroundColor Red
+            Write-Log -Message "Test failed: the device in 'Pending' state on Microsoft Entra ID."
             Write-Host ''
             Write-Host "Recommended actions: Device registration process will not trigger as the device feels itself as a registered device. To fix this issue, do the following:" -ForegroundColor Yellow
             Write-Host "                     - Clear the device state by running the command 'dsregcmd /leave' as admin." -ForegroundColor Yellow
-            Write-Host "                     - Run 'dsregcmd /join' command as admin to perform hybrid Azure AD join procedure and re-run the script." -ForegroundColor Yellow
+            Write-Host "                     - Run 'dsregcmd /join' command as admin to performMicrosoft Entra hybrid joined procedure and re-run the script." -ForegroundColor Yellow
             Write-Host ''
             Write-Host "Note: if the issue still persists, check the possible causes on the article: http://www.microsoft.com/aadjerrors" -ForegroundColor Yellow
-            Write-Log -Message "Recommended actions: Device registration process will not trigger as the device feels itself as a registered device. To fix this issue, do the following:`n                                 - Clear the device state by running the command 'dsregcmd /leave' as admin.`n                                 - Run 'dsregcmd /join' command as admin to perform hybrid Azure AD join procedure and re-run the script.`n    `n                                 Note: if the issue still persists, check the possible causes on the article: http://www.microsoft.com/aadjerrors"
+            Write-Log -Message "Recommended actions: Device registration process will not trigger as the device feels itself as a registered device. To fix this issue, do the following:`n                                 - Clear the device state by running the command 'dsregcmd /leave' as admin.`n                                 - Run 'dsregcmd /join' command as admin to performMicrosoft Entra hybrid joined procedure and re-run the script.`n    `n                                 Note: if the issue still persists, check the possible causes on the article: http://www.microsoft.com/aadjerrors"
             Write-Host ''
             Write-Host ''
             Write-Host "Script completed successfully." -ForegroundColor Green
@@ -2315,18 +2324,18 @@ Function CheckDeviceHealth($DID, $skipPendingCheck){
         Write-Log -Message "There is no sign in yet on this device" -Level WARN
     }else{
         Write-Host "Last logon timestamp: $LastLogonTimestamp UTC, $diffDays days ago" -ForegroundColor Green
-        $msg= "Last logon timestamp: $LastLogonTimestamp UTC, $diffDays days ago"
+        $msg= "Last logon timestamp: $LastLogonTimestamp UTC, $diffDays day(s) ago"
         Write-Log -Message $msg
     }
 }
 
 Function NewFun{
-    #The device is hybrid Azure AD join
+    #The device is Microsoft Entra hybrid joined
     $TenantName = $DSReg | Select-String TenantName | Select-Object -first 1
     $TenantName =($TenantName.tostring() -split ":")[1].trim()
     $hostname = hostname
-    Write-Host $hostname "device is joined to Azure AD tenant:" $TenantName -ForegroundColor Green
-    Write-Log -Message "$hostname device is joined to Azure AD tenant: $TenantName"
+    Write-Host $hostname "device is joined to Microsoft Entra tenant:" $TenantName -ForegroundColor Green
+    Write-Log -Message "$hostname device is joined to Microsoft Entra tenant: $TenantName"
     Write-Host ''
     Write-Host "Checking Key provider..." -ForegroundColor Yellow
     Write-Log -Message "Checking Key provider..."
@@ -2337,8 +2346,8 @@ Function NewFun{
         Write-Host "The KeyProvider is not configured correctly" -ForegroundColor Red
         Write-Log -Message "The KeyProvider is not configured correctly" -Level ERROR
         Write-Host ''
-        Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again" -ForegroundColor Yellow
-        Write-Log -Message "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again"
+        Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again" -ForegroundColor Yellow
+        Write-Log -Message "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again"
         Write-Host ''
         Write-Host ''
         Write-Host "Script completed successfully." -ForegroundColor Green
@@ -2376,8 +2385,8 @@ Function NewFun{
         Write-Host "Test failed: The device is in dual state" -ForegroundColor Red
         Write-Log -Message "Test failed: The device is in dual state" -Level WARN
         Write-Host ''
-        Write-Host "Recommended action: upgrade your OS to Windows 10 1803 (with KB4489894 applied). In pre-1803 releases, you will need to remove the Azure AD registered state manually before enabling Hybrid Azure AD join by disconnecting the user from Access Work or School Account" -ForegroundColor Yellow
-        Write-Log -Message "Recommended action: upgrade your OS to Windows 10 1803 (with KB4489894 applied). In pre-1803 releases, you will need to remove the Azure AD registered state manually before enabling Hybrid Azure AD join by disconnecting the user from Access Work or School Account"
+        Write-Host "Recommended action: upgrade your OS to Windows 10 1803 (with KB4489894 applied). In pre-1803 releases, you will need to remove the Microsoft Entra Registered state manually before enablingMicrosoft Entra hybrid joined by disconnecting the user from Access Work or School Account" -ForegroundColor Yellow
+        Write-Log -Message "Recommended action: upgrade your OS to Windows 10 1803 (with KB4489894 applied). In pre-1803 releases, you will need to remove the Microsoft Entra Registered state manually before enablingMicrosoft Entra hybrid joined by disconnecting the user from Access Work or School Account"
         Write-Host ''
         Write-Host ''
         Write-Host "Script completed successfully." -ForegroundColor Green
@@ -2407,8 +2416,8 @@ Function NewFun{
     }
     Write-Host ''
     Write-Host ''
-    Write-Host "The device is connected to Azure AD as hybrid Azure AD joined, and it is in healthy state" -ForegroundColor Green
-    Write-Log -Message "The device is connected to Azure AD as hybrid Azure AD joined, and it is in healthy state"
+    Write-Host "The device is connected to Microsoft Entra ID as Microsoft Entra hybrid joined, and it is in healthy state" -ForegroundColor Green
+    Write-Log -Message "The device is connected to Microsoft Entra ID as Microsoft Entra hybrid joined, and it is in healthy state"
     Write-Host ''
     Write-Host ''
     Write-Host "Script completed successfully." -ForegroundColor Green
@@ -2418,12 +2427,12 @@ Function NewFun{
 }
 
 Function NewFunAAD{
-    #The device is Azure AD joined
+    #The device is Microsoft Entra join
     $TenantName = $DSReg | Select-String TenantName | Select-Object -first 1
     $TenantName =($TenantName.tostring() -split ":")[1].trim()
     $hostname = hostname
-    Write-Host $hostname "device is joined to Azure AD tenant:" $TenantName -ForegroundColor Green
-    Write-Log -Message "$hostname device is joined to Azure AD tenant: $TenantName"
+    Write-Host $hostname "device is joined to Microsoft Entra tenant:" $TenantName -ForegroundColor Green
+    Write-Log -Message "$hostname device is joined to Microsoft Entra tenant: $TenantName"
     Write-Host ''
     Write-Host "Checking Key provider..." -ForegroundColor Yellow
     Write-Log -Message "Checking Key provider..."
@@ -2434,8 +2443,8 @@ Function NewFunAAD{
         Write-Host "The KeyProvider is not configured correctly" -ForegroundColor Red
         Write-Log -Message "The KeyProvider is not configured correctly" -Level ERROR
         Write-Host ''
-        Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again" -ForegroundColor Yellow
-        Write-Log -Message "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to perform hybrid Azure AD join procedure again"
+        Write-Host "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again" -ForegroundColor Yellow
+        Write-Log -Message "Recommended action: Run 'dsregcmd /leave' and 'dsregcmd /join' commands as admin to performMicrosoft Entra hybrid joined procedure again"
         Write-Host ''
         Write-Host ''
         Write-Host "Script completed successfully." -ForegroundColor Green
@@ -2463,8 +2472,8 @@ Function NewFunAAD{
     
     Write-Host ''
     Write-Host ''
-    Write-Host "The device is connected successfully to Azure AD as Azure AD joined device, and it is in healthy state" -ForegroundColor Green
-    Write-Log -Message "The device is connected successfully to Azure AD as Azure AD joined device, and it is in healthy state"
+    Write-Host "The device is connected successfully to Microsoft Entra ID as Microsoft Entra joined device, and it is in healthy state" -ForegroundColor Green
+    Write-Log -Message "The device is connected successfully to Microsoft Entra ID as Microsoft Entra joined device, and it is in healthy state"
     Write-Host ''
     Write-Host ''
     Write-Host "Script completed successfully." -ForegroundColor Green
@@ -2474,12 +2483,12 @@ Function NewFunAAD{
 }
 
 Function NewFunWPJ{
-    #The device is Azure AD joined
+    #The device is Microsoft Entra join
     $TenantName = $DSReg | Select-String WorkplaceTenantName 
     $TenantName =($TenantName.tostring() -split ":")[1].trim()
     $hostname = hostname
-    Write-Host $hostname "device is connected to Azure AD tenant:" $TenantName "as Azure AD Register device" -ForegroundColor Green
-    Write-Log -Message "$hostname device is connected to Azure AD tenant: $TenantName as Azure AD Register device"
+    Write-Host $hostname "device is connected to Microsoft Entra tenant:" $TenantName "as Microsoft Entra Registered device" -ForegroundColor Green
+    Write-Log -Message "$hostname device is connected to Microsoft Entra tenant: $TenantName as Microsoft Entra Registered device"
     # Check other values.
     #Checking the certificate:
     $DID = $DSReg | Select-String WorkplaceDeviceId
@@ -2497,8 +2506,8 @@ Function NewFunWPJ{
 
     Write-Host ''
     Write-Host ''
-    Write-Host "The device is connected successfully to Azure AD as Azure AD registered device, and it is in healthy state" -ForegroundColor Green
-    Write-Log -Message "The device is connected successfully to Azure AD as Azure AD registered device, and it is in healthy state"
+    Write-Host "The device is connected successfully to Microsoft Entra ID as Microsoft Entra Registered device, and it is in healthy state" -ForegroundColor Green
+    Write-Log -Message "The device is connected successfully to Microsoft Entra ID as Microsoft Entra Registered device, and it is in healthy state"
     Write-Host ''
     Write-Host ''
     Write-Host "Script completed successfully." -ForegroundColor Green
@@ -2529,26 +2538,26 @@ Function DJ++{
             Write-Host $hostname "device is NOT joined to the local domain" -ForegroundColor Yellow
             Write-Log -Message "$hostname device is NOT joined to the local domain" -Level ERROR
             Write-Host ''
-            Write-Host "Checking if the device joined to Azure AD..." -ForegroundColor Yellow
-            Write-Log -Message "Checking if the device joined to Azure AD..."
+            Write-Host "Checking if the device joined to Microsoft Entra ID..." -ForegroundColor Yellow
+            Write-Log -Message "Checking if the device joined to Microsoft Entra ID..."
             $AADJ = $DSReg | Select-String AzureAdJoined
             $AADJ = ($AADJ.tostring() -split ":")[1].trim()
             if ($AADJ -ne "YES"){
                 #The device is not joined to AAD:
-                Write-Host $hostname "device is NOT joined to Azure AD" -ForegroundColor Yellow
-                Write-Log -Message "$hostname device is NOT joined to Azure AD" -Level ERROR
+                Write-Host $hostname "device is NOT joined to Microsoft Entra ID" -ForegroundColor Yellow
+                Write-Log -Message "$hostname device is NOT joined to Microsoft Entra ID" -Level ERROR
                 Write-Host ''
-                Write-Host "Checking if the device is Azure AD Registered..." -ForegroundColor Yellow
-                Write-Log -Message "Checking if the device is Azure AD Registered..."
+                Write-Host "Checking if the device is Microsoft Entra Registered..." -ForegroundColor Yellow
+                Write-Log -Message "Checking if the device is Microsoft Entra Registered..."
                 $WPJ = $DSReg | Select-String WorkplaceJoined
                 $WPJ = ($WPJ.tostring() -split ":")[1].trim()
                 if ($WPJ -ne "YES"){
                     #The device is not WPJ:
-                    Write-Host $hostname "device is NOT Azure AD Registered" -ForegroundColor Yellow
-                    Write-Log -Message "$hostname device is NOT Azure AD Registered" -Level ERROR
+                    Write-Host $hostname "device is NOT Microsoft Entra Registered" -ForegroundColor Yellow
+                    Write-Log -Message "$hostname device is NOT Microsoft Entra Registered" -Level ERROR
                     Write-Host ''
-                    Write-Host $hostname "The device is not connected to Azure AD" -ForegroundColor Red
-                    Write-Log -Message "$hostname The device is not connected to Azure AD" -Level ERROR
+                    Write-Host $hostname "The device is not connected to Microsoft Entra ID" -ForegroundColor Red
+                    Write-Log -Message "$hostname The device is not connected to Microsoft Entra ID" -Level ERROR
                     Write-Host ''
                     Write-Host ''
                     Write-Host "Script completed successfully." -ForegroundColor Green
@@ -2581,11 +2590,11 @@ Function DJ++{
             $AADJ = ($AADJ.tostring() -split ":")[1].trim()
             if ($AADJ -ne "YES"){
             #The device is not connected to AAD:
-            Write-Host $hostname "device is NOT connected to Azure AD" -ForegroundColor Red
-            Write-Log -Message "$hostname device is NOT connected to Azure AD"
+            Write-Host $hostname "device is NOT connected to Microsoft Entra ID" -ForegroundColor Red
+            Write-Log -Message "$hostname device is NOT connected to Microsoft Entra ID"
             Write-Host ''
-            Write-Host "Recommended action: Run 'dsregcmd /join' command as admin to perform hybrid Azure AD join procedure. To troubleshoot hybrid device registration, re-run the tool and select option #3. If the issue still persists, check the possible causes on the article: http://www.microsoft.com/aadjerrors" -ForegroundColor Yellow
-            Write-Log -Message "Recommended action: Run 'dsregcmd /join' command as admin to perform hybrid Azure AD join procedure. To troubleshoot hybrid device registration, re-run the tool and select option #3. If the issue still persists, check the possible causes on the article: http://www.microsoft.com/aadjerrors"
+            Write-Host "Recommended action: Run 'dsregcmd /join' command as admin to performMicrosoft Entra hybrid joined procedure. To troubleshoot hybrid device registration, re-run the tool and select option #3. If the issue still persists, check the possible causes on the article: http://www.microsoft.com/aadjerrors" -ForegroundColor Yellow
+            Write-Log -Message "Recommended action: Run 'dsregcmd /join' command as admin to performMicrosoft Entra hybrid joined procedure. To troubleshoot hybrid device registration, re-run the tool and select option #3. If the issue still persists, check the possible causes on the article: http://www.microsoft.com/aadjerrors"
             Write-Host ''
             Write-Host ''
             Write-Host "Script completed successfully." -ForegroundColor Green
@@ -2679,8 +2688,8 @@ Function DJ++TS{
         Write-Host $hostname "Test failed: device is NOT joined to the local domain" -ForegroundColor Red
         Write-Log -Message "Test failed: device is NOT joined to the local domain" -Level ERROR
         Write-Host ''
-        Write-Host "Recommended action: You need to join the device to the local domain in order to perform hybrid Azure AD join." -ForegroundColor Yellow
-        Write-Log -Message "Recommended action: You need to join the device to the local domain in order to perform hybrid Azure AD join."
+        Write-Host "Recommended action: You need to join the device to the local domain in order to perform Microsoft Entra hybrid joined." -ForegroundColor Yellow
+        Write-Log -Message "Recommended action: You need to join the device to the local domain in order to perform Microsoft Entra hybrid joined."
         Write-Host ''
         Write-Host ''
         Write-Host "Script completed successfully." -ForegroundColor Green
@@ -2706,8 +2715,8 @@ Function DJ++TS{
     if ($AADJ -ne "YES"){
         #The device is not connected to AAD:
         ### perform DJ++ (all other tests should be here)
-        Write-Host "Test failed:" $hostname "device is NOT connected to Azure AD" -ForegroundColor Red
-        Write-Log -Message "Test failed: $hostname device is NOT connected to Azure AD" -Level ERROR
+        Write-Host "Test failed:" $hostname "device is NOT connected to Microsoft Entra ID" -ForegroundColor Red
+        Write-Log -Message "Test failed: $hostname device is NOT connected to Microsoft Entra ID" -Level ERROR
         #Check Automatic-Device-Join Task
         Write-Host ''
         Write-Host "Testing Automatic-Device-Join task scheduler..." -ForegroundColor Yellow
@@ -2823,9 +2832,9 @@ Function DJ++TS{
             Write-Host "Test failed: WFTrust protocol is not enabled on federation service configuration." -ForegroundColor Red
             Write-Log -Message "Test failed: WFTrust protocol is not enabled on federation service configuration." -Level ERROR
             Write-Host ''
-            Write-Host "Recommended action: Make sure that your federation service supports WSTrust protocol, and WSTrust is enabled on Azure AD federated domain configuration." -ForegroundColor Yellow
+            Write-Host "Recommended action: Make sure that your federation service supports WSTrust protocol, and WSTrust is enabled on Microsoft Entra ID federated domain configuration." -ForegroundColor Yellow
             Write-Host "Important Note: if your windows 10 version is 1803 or above, device registration will fall back to sync join." -ForegroundColor Yellow
-            Write-Log -Message "Recommended action: Make sure that your federation service supports WSTrust protocol, and WSTrust is enabled on Azure AD federated domain configuration.`n                                 Important Note: if your windows 10 version is 1803 or above, device registration will fall back to sync join."
+            Write-Log -Message "Recommended action: Make sure that your federation service supports WSTrust protocol, and WSTrust is enabled on Microsoft Entra ID federated domain configuration.`n                                 Important Note: if your windows 10 version is 1803 or above, device registration will fall back to sync join."
             SyncJoinCheck $true
         }else{
             #WSTrust enabled
@@ -2993,19 +3002,19 @@ Function DJ++TS{
         Test-DevRegApp
         Write-Host ''
         Write-Host ''
-        Write-Host "Script completed successfully. You can start hybrid Azure AD registration process." -ForegroundColor Green
-        Write-Log -Message "Script completed successfully. You can start hybrid Azure AD registration process."
+        Write-Host "Script completed successfully. You can start Microsoft Entra hybrid joined registration process." -ForegroundColor Green
+        Write-Log -Message "Script completed successfully. You can start Microsoft Entra hybrid joined registration process."
         Write-Host ''
         Write-Host ''
         exit
 
     }else{
-        #The device is hybrid Azure AD join
+        #The device is Microsoft Entra hybrid joined
         $TenantName = $DSReg | Select-String TenantName | Select-Object -first 1
         $TenantName =($TenantName.tostring() -split ":")[1].trim()
         $hostname = hostname
-        Write-Host "Test passed:" $hostname "device is joined to Azure AD tenant:" $TenantName -ForegroundColor Green
-        Write-Log -Message "Test passed: $hostname device is joined to Azure AD tenant: $TenantName"
+        Write-Host "Test passed:" $hostname "device is joined to Microsoft Entra tenant:" $TenantName -ForegroundColor Green
+        Write-Log -Message "Test passed: $hostname device is joined to Microsoft Entra tenant: $TenantName"
     }
 
     #CheckMSOnline
@@ -3028,8 +3037,8 @@ Function DJ++TS{
         Write-Host "Test failed: The device is in dual state" -ForegroundColor Red
         Write-Log -Message "Test failed: The device is in dual state" -Level WARN
         Write-Host ''
-        Write-Host "Recommended action: upgrade your OS to Windows 10 1803 (with KB4489894 applied). In pre-1803 releases, you will need to remove the Azure AD registered state manually before enabling Hybrid Azure AD join by disconnecting the user from Access Work or School Account" -ForegroundColor Yellow
-        Write-Log -Message "Recommended action: upgrade your OS to Windows 10 1803 (with KB4489894 applied). In pre-1803 releases, you will need to remove the Azure AD registered state manually before enabling Hybrid Azure AD join by disconnecting the user from Access Work or School Account"
+        Write-Host "Recommended action: upgrade your OS to Windows 10 1803 (with KB4489894 applied). In pre-1803 releases, you will need to remove the Microsoft Entra Registered state manually before enablingMicrosoft Entra hybrid joined by disconnecting the user from Access Work or School Account" -ForegroundColor Yellow
+        Write-Log -Message "Recommended action: upgrade your OS to Windows 10 1803 (with KB4489894 applied). In pre-1803 releases, you will need to remove the Microsoft Entra Registered state manually before enablingMicrosoft Entra hybrid joined by disconnecting the user from Access Work or School Account"
         Write-Host ''
         Write-Host ''
         Write-Host "Script completed successfully." -ForegroundColor Green
@@ -3059,8 +3068,8 @@ Function DJ++TS{
     }
     Write-Host ''
     Write-Host ''
-    Write-Host "The device is connected to Azure AD as hybrid Azure AD joined device, and it is in healthy state." -ForegroundColor Green
-    Write-Log -Message "The device is connected to Azure AD as hybrid Azure AD joined device, and it is in healthy state."
+    Write-Host "The device is connected to Microsoft Entra ID as Microsoft Entra hybrid joined device, and it is in healthy state." -ForegroundColor Green
+    Write-Log -Message "The device is connected to Microsoft Entra ID as Microsoft Entra hybrid joined device, and it is in healthy state."
     Write-Host ''
     Write-Host ''
     Write-Host "Script completed successfully." -ForegroundColor Green
@@ -3086,11 +3095,11 @@ Write-Host '          Device Registration Troubleshooter Tool          ' -Foregr
 Write-Host ''
 Write-Host "Please provide any feedback, comment or suggestion" -ForegroundColor Yellow
 Write-Host
-Write-Host "Enter (1) to troubleshoot Azure AD Register" -ForegroundColor Green
+Write-Host "Enter (1) to troubleshoot Microsoft Entra Register" -ForegroundColor Green
 Write-Host ''
-Write-Host "Enter (2) to troubleshoot Azure AD Join device" -ForegroundColor Green
+Write-Host "Enter (2) to troubleshoot Microsoft Entra join device" -ForegroundColor Green
 Write-Host ''
-Write-Host "Enter (3) to troubleshoot Hybrid Azure AD Join" -ForegroundColor Green
+Write-Host "Enter (3) to troubleshoot Microsoft Entra hybrid join" -ForegroundColor Green
 Write-Host ''
 Write-Host "Enter (4) to verify Service Connection Point (SCP)" -ForegroundColor Green
 Write-Host ''
@@ -3116,7 +3125,7 @@ if($Error[0].Exception.Message -ne $null){
     Write-Host ''
 }
 Add-Content ".\DSRegTool.log" -Value "==========================================================" -ErrorAction SilentlyContinue
-Write-Log -Message "DSRegTool 3.6 has started"
+Write-Log -Message "DSRegTool 4.0 has started"
 $msg="Device Name : " + (Get-Childitem env:computername).value
 Write-Log -Message $msg
 
@@ -3140,22 +3149,22 @@ $Num = Read-Host -Prompt "Invalid input. Please make a correct selection from th
 
 if($Num -eq '1'){
     Write-Host ''
-    Write-Host "Troubleshoot Azure AD Register option has been chosen"
-    Write-Log -Message "Troubleshoot Azure AD Register option has been chosen"
+    Write-Host "troubleshoot Microsoft Entra Register option has been chosen"
+    Write-Log -Message "troubleshoot Microsoft Entra Register option has been chosen"
     Write-Host ''
-    DSRegToolStart
+    DSRegToolStart 
     WPJTS
 }elseif($Num -eq '2'){
     Write-Host ''
-    Write-Host "Troubleshoot Azure AD Join device option has been chosen"
-    Write-Log -Message "Troubleshoot Azure AD Join device option has been chosen"
+    Write-Host "troubleshoot Microsoft Entra join device option has been chosen"
+    Write-Log -Message "troubleshoot Microsoft Entra join device option has been chosen"
     Write-Host ''
     DSRegToolStart
     AADJ
 }elseif($Num -eq '3'){
     Write-Host ''
-    Write-Host "Troubleshoot Hybrid Azure AD Join option has been chosen"
-    Write-Log -Message "Troubleshoot Hybrid Azure AD Join option has been chosen"
+    Write-Host "TroubleshootMicrosoft Entra hybrid joined option has been chosen"
+    Write-Log -Message "TroubleshootMicrosoft Entra hybrid joined option has been chosen"
     Write-Host ''
     DSRegToolStart
     DJ++TS
@@ -3199,195 +3208,3 @@ if($Num -eq '1'){
     Write-Log -Message "Quit option has been chosen"
     Write-Host ''
 }
-# SIG # Begin signature block
-# MIIjjAYJKoZIhvcNAQcCoIIjfTCCI3kCAQExDzANBglghkgBZQMEAgEFADB5Bgor
-# BgEEAYI3AgEEoGswaTA0BgorBgEEAYI3AgEeMCYCAwEAAAQQH8w7YFlLCE63JNLG
-# KX7zUQIBAAIBAAIBAAIBAAIBADAxMA0GCWCGSAFlAwQCAQUABCA3Ylrxx3XhqVfW
-# BFL/so20vkyeZyI+rQtz/7mFImb1maCCDYUwggYDMIID66ADAgECAhMzAAACU+OD
-# 3pbexW7MAAAAAAJTMA0GCSqGSIb3DQEBCwUAMH4xCzAJBgNVBAYTAlVTMRMwEQYD
-# VQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNy
-# b3NvZnQgQ29ycG9yYXRpb24xKDAmBgNVBAMTH01pY3Jvc29mdCBDb2RlIFNpZ25p
-# bmcgUENBIDIwMTEwHhcNMjEwOTAyMTgzMzAwWhcNMjIwOTAxMTgzMzAwWjB0MQsw
-# CQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9u
-# ZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMR4wHAYDVQQDExVNaWNy
-# b3NvZnQgQ29ycG9yYXRpb24wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIB
-# AQDLhxHwq3OhH+4J+SX4qS/VQG8HybccH7tnG+BUqrXubfGuDFYPZ29uCuHfQlO1
-# lygLgMpJ4Geh6/6poQ5VkDKfVssn6aA1PCzIh8iOPMQ9Mju3sLF9Sn+Pzuaie4BN
-# rp0MuZLDEXgVYx2WNjmzqcxC7dY9SC3znOh5qUy2vnmWygC7b9kj0d3JrGtjc5q5
-# 0WfV3WLXAQHkeRROsJFBZfXFGoSvRljFFUAjU/zdhP92P+1JiRRRikVy/sqIhMDY
-# +7tVdzlE2fwnKOv9LShgKeyEevgMl0B1Fq7E2YeBZKF6KlhmYi9CE1350cnTUoU4
-# YpQSnZo0YAnaenREDLfFGKTdAgMBAAGjggGCMIIBfjAfBgNVHSUEGDAWBgorBgEE
-# AYI3TAgBBggrBgEFBQcDAzAdBgNVHQ4EFgQUlZpLWIccXoxessA/DRbe26glhEMw
-# VAYDVR0RBE0wS6RJMEcxLTArBgNVBAsTJE1pY3Jvc29mdCBJcmVsYW5kIE9wZXJh
-# dGlvbnMgTGltaXRlZDEWMBQGA1UEBRMNMjMwMDEyKzQ2NzU5ODAfBgNVHSMEGDAW
-# gBRIbmTlUAXTgqoXNzcitW2oynUClTBUBgNVHR8ETTBLMEmgR6BFhkNodHRwOi8v
-# d3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NybC9NaWNDb2RTaWdQQ0EyMDExXzIw
-# MTEtMDctMDguY3JsMGEGCCsGAQUFBwEBBFUwUzBRBggrBgEFBQcwAoZFaHR0cDov
-# L3d3dy5taWNyb3NvZnQuY29tL3BraW9wcy9jZXJ0cy9NaWNDb2RTaWdQQ0EyMDEx
-# XzIwMTEtMDctMDguY3J0MAwGA1UdEwEB/wQCMAAwDQYJKoZIhvcNAQELBQADggIB
-# AKVY+yKcJVVxf9W2vNkL5ufjOpqcvVOOOdVyjy1dmsO4O8khWhqrecdVZp09adOZ
-# 8kcMtQ0U+oKx484Jg11cc4Ck0FyOBnp+YIFbOxYCqzaqMcaRAgy48n1tbz/EFYiF
-# zJmMiGnlgWFCStONPvQOBD2y/Ej3qBRnGy9EZS1EDlRN/8l5Rs3HX2lZhd9WuukR
-# bUk83U99TPJyo12cU0Mb3n1HJv/JZpwSyqb3O0o4HExVJSkwN1m42fSVIVtXVVSa
-# YZiVpv32GoD/dyAS/gyplfR6FI3RnCOomzlycSqoz0zBCPFiCMhVhQ6qn+J0GhgR
-# BJvGKizw+5lTfnBFoqKZJDROz+uGDl9tw6JvnVqAZKGrWv/CsYaegaPePFrAVSxA
-# yUwOFTkAqtNC8uAee+rv2V5xLw8FfpKJ5yKiMKnCKrIaFQDr5AZ7f2ejGGDf+8Tz
-# OiK1AgBvOW3iTEEa/at8Z4+s1CmnEAkAi0cLjB72CJedU1LAswdOCWM2MDIZVo9j
-# 0T74OkJLTjPd3WNEyw0rBXTyhlbYQsYt7ElT2l2TTlF5EmpVixGtj4ChNjWoKr9y
-# TAqtadd2Ym5FNB792GzwNwa631BPCgBJmcRpFKXt0VEQq7UXVNYBiBRd+x4yvjqq
-# 5aF7XC5nXCgjbCk7IXwmOphNuNDNiRq83Ejjnc7mxrJGMIIHejCCBWKgAwIBAgIK
-# YQ6Q0gAAAAAAAzANBgkqhkiG9w0BAQsFADCBiDELMAkGA1UEBhMCVVMxEzARBgNV
-# BAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jv
-# c29mdCBDb3Jwb3JhdGlvbjEyMDAGA1UEAxMpTWljcm9zb2Z0IFJvb3QgQ2VydGlm
-# aWNhdGUgQXV0aG9yaXR5IDIwMTEwHhcNMTEwNzA4MjA1OTA5WhcNMjYwNzA4MjEw
-# OTA5WjB+MQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UE
-# BxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSgwJgYD
-# VQQDEx9NaWNyb3NvZnQgQ29kZSBTaWduaW5nIFBDQSAyMDExMIICIjANBgkqhkiG
-# 9w0BAQEFAAOCAg8AMIICCgKCAgEAq/D6chAcLq3YbqqCEE00uvK2WCGfQhsqa+la
-# UKq4BjgaBEm6f8MMHt03a8YS2AvwOMKZBrDIOdUBFDFC04kNeWSHfpRgJGyvnkmc
-# 6Whe0t+bU7IKLMOv2akrrnoJr9eWWcpgGgXpZnboMlImEi/nqwhQz7NEt13YxC4D
-# dato88tt8zpcoRb0RrrgOGSsbmQ1eKagYw8t00CT+OPeBw3VXHmlSSnnDb6gE3e+
-# lD3v++MrWhAfTVYoonpy4BI6t0le2O3tQ5GD2Xuye4Yb2T6xjF3oiU+EGvKhL1nk
-# kDstrjNYxbc+/jLTswM9sbKvkjh+0p2ALPVOVpEhNSXDOW5kf1O6nA+tGSOEy/S6
-# A4aN91/w0FK/jJSHvMAhdCVfGCi2zCcoOCWYOUo2z3yxkq4cI6epZuxhH2rhKEmd
-# X4jiJV3TIUs+UsS1Vz8kA/DRelsv1SPjcF0PUUZ3s/gA4bysAoJf28AVs70b1FVL
-# 5zmhD+kjSbwYuER8ReTBw3J64HLnJN+/RpnF78IcV9uDjexNSTCnq47f7Fufr/zd
-# sGbiwZeBe+3W7UvnSSmnEyimp31ngOaKYnhfsi+E11ecXL93KCjx7W3DKI8sj0A3
-# T8HhhUSJxAlMxdSlQy90lfdu+HggWCwTXWCVmj5PM4TasIgX3p5O9JawvEagbJjS
-# 4NaIjAsCAwEAAaOCAe0wggHpMBAGCSsGAQQBgjcVAQQDAgEAMB0GA1UdDgQWBBRI
-# bmTlUAXTgqoXNzcitW2oynUClTAZBgkrBgEEAYI3FAIEDB4KAFMAdQBiAEMAQTAL
-# BgNVHQ8EBAMCAYYwDwYDVR0TAQH/BAUwAwEB/zAfBgNVHSMEGDAWgBRyLToCMZBD
-# uRQFTuHqp8cx0SOJNDBaBgNVHR8EUzBRME+gTaBLhklodHRwOi8vY3JsLm1pY3Jv
-# c29mdC5jb20vcGtpL2NybC9wcm9kdWN0cy9NaWNSb29DZXJBdXQyMDExXzIwMTFf
-# MDNfMjIuY3JsMF4GCCsGAQUFBwEBBFIwUDBOBggrBgEFBQcwAoZCaHR0cDovL3d3
-# dy5taWNyb3NvZnQuY29tL3BraS9jZXJ0cy9NaWNSb29DZXJBdXQyMDExXzIwMTFf
-# MDNfMjIuY3J0MIGfBgNVHSAEgZcwgZQwgZEGCSsGAQQBgjcuAzCBgzA/BggrBgEF
-# BQcCARYzaHR0cDovL3d3dy5taWNyb3NvZnQuY29tL3BraW9wcy9kb2NzL3ByaW1h
-# cnljcHMuaHRtMEAGCCsGAQUFBwICMDQeMiAdAEwAZQBnAGEAbABfAHAAbwBsAGkA
-# YwB5AF8AcwB0AGEAdABlAG0AZQBuAHQALiAdMA0GCSqGSIb3DQEBCwUAA4ICAQBn
-# 8oalmOBUeRou09h0ZyKbC5YR4WOSmUKWfdJ5DJDBZV8uLD74w3LRbYP+vj/oCso7
-# v0epo/Np22O/IjWll11lhJB9i0ZQVdgMknzSGksc8zxCi1LQsP1r4z4HLimb5j0b
-# pdS1HXeUOeLpZMlEPXh6I/MTfaaQdION9MsmAkYqwooQu6SpBQyb7Wj6aC6VoCo/
-# KmtYSWMfCWluWpiW5IP0wI/zRive/DvQvTXvbiWu5a8n7dDd8w6vmSiXmE0OPQvy
-# CInWH8MyGOLwxS3OW560STkKxgrCxq2u5bLZ2xWIUUVYODJxJxp/sfQn+N4sOiBp
-# mLJZiWhub6e3dMNABQamASooPoI/E01mC8CzTfXhj38cbxV9Rad25UAqZaPDXVJi
-# hsMdYzaXht/a8/jyFqGaJ+HNpZfQ7l1jQeNbB5yHPgZ3BtEGsXUfFL5hYbXw3MYb
-# BL7fQccOKO7eZS/sl/ahXJbYANahRr1Z85elCUtIEJmAH9AAKcWxm6U/RXceNcbS
-# oqKfenoi+kiVH6v7RyOA9Z74v2u3S5fi63V4GuzqN5l5GEv/1rMjaHXmr/r8i+sL
-# gOppO6/8MO0ETI7f33VtY5E90Z1WTk+/gFcioXgRMiF670EKsT/7qMykXcGhiJtX
-# cVZOSEXAQsmbdlsKgEhr/Xmfwb1tbWrJUnMTDXpQzTGCFV0wghVZAgEBMIGVMH4x
-# CzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRt
-# b25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xKDAmBgNVBAMTH01p
-# Y3Jvc29mdCBDb2RlIFNpZ25pbmcgUENBIDIwMTECEzMAAAJT44Pelt7FbswAAAAA
-# AlMwDQYJYIZIAWUDBAIBBQCggbAwGQYJKoZIhvcNAQkDMQwGCisGAQQBgjcCAQQw
-# HAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwLwYJKoZIhvcNAQkEMSIEIMCz
-# XEuXQK7AEJi05zwd1Pmk+6Turrd3BBxZvNJQ/rHqMEQGCisGAQQBgjcCAQwxNjA0
-# oBSAEgBNAGkAYwByAG8AcwBvAGYAdKEcgBpodHRwczovL3d3d3cubWljcm9zb2Z0
-# LmNvbTANBgkqhkiG9w0BAQEFAASCAQBdg12gRsnF0N8ThkpKEG9wbCKsc/+PUPga
-# 0xb9B75niwJnIdBcvoLKxEgfSJ+hMinW6tUwwPhneq2dEAmTZNkuJ3ZAUGeuxIjs
-# 3slXyWVY5sL4/cz77O6hox7f7akLRyc0O/8vNL9X1TOWF+0LN88ZKQ3pv6DP8ZqK
-# 0MBFAVNjUjimDt7z3JW87EnpeKtSyaTE8StNlvaU5eAACKfawq3Gp/AT2aJT7E2Q
-# h94V2aKcBuoodx8AcDYWXhtueBM+QwbAroMfP8L5tj1FV70Ig3SuhIwtt6CPIdAA
-# r5aSC+XnRH0ZhRbQ3CNLwt+52dgH+Tyb/m2u/5Af/A/UVoD4qHXAoYIS5TCCEuEG
-# CisGAQQBgjcDAwExghLRMIISzQYJKoZIhvcNAQcCoIISvjCCEroCAQMxDzANBglg
-# hkgBZQMEAgEFADCCAVEGCyqGSIb3DQEJEAEEoIIBQASCATwwggE4AgEBBgorBgEE
-# AYRZCgMBMDEwDQYJYIZIAWUDBAIBBQAEIFVdFcVQ9daJgCbP1CX6Dl1kjtvRJwWW
-# wK20IAyW2D6bAgZhktafl0oYEzIwMjExMjE1MTMyMDA2Ljk1NVowBIACAfSggdCk
-# gc0wgcoxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQH
-# EwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xJTAjBgNV
-# BAsTHE1pY3Jvc29mdCBBbWVyaWNhIE9wZXJhdGlvbnMxJjAkBgNVBAsTHVRoYWxl
-# cyBUU1MgRVNOOkU1QTYtRTI3Qy01OTJFMSUwIwYDVQQDExxNaWNyb3NvZnQgVGlt
-# ZS1TdGFtcCBTZXJ2aWNloIIOPDCCBPEwggPZoAMCAQICEzMAAAFHnY/x5t4xg1kA
-# AAAAAUcwDQYJKoZIhvcNAQELBQAwfDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldh
-# c2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBD
-# b3Jwb3JhdGlvbjEmMCQGA1UEAxMdTWljcm9zb2Z0IFRpbWUtU3RhbXAgUENBIDIw
-# MTAwHhcNMjAxMTEyMTgyNTU1WhcNMjIwMjExMTgyNTU1WjCByjELMAkGA1UEBhMC
-# VVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNV
-# BAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjElMCMGA1UECxMcTWljcm9zb2Z0IEFt
-# ZXJpY2EgT3BlcmF0aW9uczEmMCQGA1UECxMdVGhhbGVzIFRTUyBFU046RTVBNi1F
-# MjdDLTU5MkUxJTAjBgNVBAMTHE1pY3Jvc29mdCBUaW1lLVN0YW1wIFNlcnZpY2Uw
-# ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCtBQNM6X32KFk/BJ8Yaprf
-# zEt6Lj34G+VLjzgfEgOGSVd1Mu7nCphK0K4oyPrzItgNRjB4gUiKq6GzgxdDHgZP
-# gTEvm57zsascyGrybWkf3VVr8bqf2PIgGvwKDNEgVcygsEbuWwXz9Li6M7AOoD4T
-# B8fl4ATm+L7b4+lYDUMJYMLzpiJzM745a0XHiriUaOpYWfkwO9Hz6uf+k2Hq7yGy
-# guH8naPLMnYfmYIt2PXAwWVvG4MD4YbjXBVZ14ueh7YlqZTMua3n9kT1CZDsHvz+
-# o58nsoamXRwRFOb7LDjVV++cZIZLO29usiI0H79tb3fSvh9tU7QC7CirNCBYagNJ
-# AgMBAAGjggEbMIIBFzAdBgNVHQ4EFgQUtPjcb95koYZXGy9DPxN49dSCsLowHwYD
-# VR0jBBgwFoAU1WM6XIoxkPNDe3xGG8UzaFqFbVUwVgYDVR0fBE8wTTBLoEmgR4ZF
-# aHR0cDovL2NybC5taWNyb3NvZnQuY29tL3BraS9jcmwvcHJvZHVjdHMvTWljVGlt
-# U3RhUENBXzIwMTAtMDctMDEuY3JsMFoGCCsGAQUFBwEBBE4wTDBKBggrBgEFBQcw
-# AoY+aHR0cDovL3d3dy5taWNyb3NvZnQuY29tL3BraS9jZXJ0cy9NaWNUaW1TdGFQ
-# Q0FfMjAxMC0wNy0wMS5jcnQwDAYDVR0TAQH/BAIwADATBgNVHSUEDDAKBggrBgEF
-# BQcDCDANBgkqhkiG9w0BAQsFAAOCAQEAUMQOyjV+ea2kEtXqD0cOfD2Z2PFUIy5k
-# LkGU53RDGcfhlzIR9QlTgZLqTEhgLLuCSy6jcma+nPg7e5Xg1oqCZcZJRwtRPzS1
-# F6/M6YR35H3brN0maVnPrmrQ91kkfsNqDTtuWDiAIBfkNEgCpQZCb4OV3HMu5L8e
-# Zzg5dUaJ7XE+LBuphJSLFJtabxYt4fkCQxnTD2z50Y32ZuXiNmFFia7qVq+3Yc3m
-# mW02+/KWH8P1HPiobJG8crGYgSEkxtkUXGdoutwGWW88KR9RRcM/4GKLqt2OQ8AW
-# EQb7shgM8pxNvu30TxejRApa4WAfOAejTG4+KzBm67XjVZ2IlXAPkjCCBnEwggRZ
-# oAMCAQICCmEJgSoAAAAAAAIwDQYJKoZIhvcNAQELBQAwgYgxCzAJBgNVBAYTAlVT
-# MRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQK
-# ExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xMjAwBgNVBAMTKU1pY3Jvc29mdCBSb290
-# IENlcnRpZmljYXRlIEF1dGhvcml0eSAyMDEwMB4XDTEwMDcwMTIxMzY1NVoXDTI1
-# MDcwMTIxNDY1NVowfDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24x
-# EDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlv
-# bjEmMCQGA1UEAxMdTWljcm9zb2Z0IFRpbWUtU3RhbXAgUENBIDIwMTAwggEiMA0G
-# CSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCpHQ28dxGKOiDs/BOX9fp/aZRrdFQQ
-# 1aUKAIKF++18aEssX8XD5WHCdrc+Zitb8BVTJwQxH0EbGpUdzgkTjnxhMFmxMEQP
-# 8WCIhFRDDNdNuDgIs0Ldk6zWczBXJoKjRQ3Q6vVHgc2/JGAyWGBG8lhHhjKEHnRh
-# Z5FfgVSxz5NMksHEpl3RYRNuKMYa+YaAu99h/EbBJx0kZxJyGiGKr0tkiVBisV39
-# dx898Fd1rL2KQk1AUdEPnAY+Z3/1ZsADlkR+79BL/W7lmsqxqPJ6Kgox8NpOBpG2
-# iAg16HgcsOmZzTznL0S6p/TcZL2kAcEgCZN4zfy8wMlEXV4WnAEFTyJNAgMBAAGj
-# ggHmMIIB4jAQBgkrBgEEAYI3FQEEAwIBADAdBgNVHQ4EFgQU1WM6XIoxkPNDe3xG
-# G8UzaFqFbVUwGQYJKwYBBAGCNxQCBAweCgBTAHUAYgBDAEEwCwYDVR0PBAQDAgGG
-# MA8GA1UdEwEB/wQFMAMBAf8wHwYDVR0jBBgwFoAU1fZWy4/oolxiaNE9lJBb186a
-# GMQwVgYDVR0fBE8wTTBLoEmgR4ZFaHR0cDovL2NybC5taWNyb3NvZnQuY29tL3Br
-# aS9jcmwvcHJvZHVjdHMvTWljUm9vQ2VyQXV0XzIwMTAtMDYtMjMuY3JsMFoGCCsG
-# AQUFBwEBBE4wTDBKBggrBgEFBQcwAoY+aHR0cDovL3d3dy5taWNyb3NvZnQuY29t
-# L3BraS9jZXJ0cy9NaWNSb29DZXJBdXRfMjAxMC0wNi0yMy5jcnQwgaAGA1UdIAEB
-# /wSBlTCBkjCBjwYJKwYBBAGCNy4DMIGBMD0GCCsGAQUFBwIBFjFodHRwOi8vd3d3
-# Lm1pY3Jvc29mdC5jb20vUEtJL2RvY3MvQ1BTL2RlZmF1bHQuaHRtMEAGCCsGAQUF
-# BwICMDQeMiAdAEwAZQBnAGEAbABfAFAAbwBsAGkAYwB5AF8AUwB0AGEAdABlAG0A
-# ZQBuAHQALiAdMA0GCSqGSIb3DQEBCwUAA4ICAQAH5ohRDeLG4Jg/gXEDPZ2joSFv
-# s+umzPUxvs8F4qn++ldtGTCzwsVmyWrf9efweL3HqJ4l4/m87WtUVwgrUYJEEvu5
-# U4zM9GASinbMQEBBm9xcF/9c+V4XNZgkVkt070IQyK+/f8Z/8jd9Wj8c8pl5SpFS
-# AK84Dxf1L3mBZdmptWvkx872ynoAb0swRCQiPM/tA6WWj1kpvLb9BOFwnzJKJ/1V
-# ry/+tuWOM7tiX5rbV0Dp8c6ZZpCM/2pif93FSguRJuI57BlKcWOdeyFtw5yjojz6
-# f32WapB4pm3S4Zz5Hfw42JT0xqUKloakvZ4argRCg7i1gJsiOCC1JeVk7Pf0v35j
-# WSUPei45V3aicaoGig+JFrphpxHLmtgOR5qAxdDNp9DvfYPw4TtxCd9ddJgiCGHa
-# sFAeb73x4QDf5zEHpJM692VHeOj4qEir995yfmFrb3epgcunCaw5u+zGy9iCtHLN
-# HfS4hQEegPsbiSpUObJb2sgNVZl6h3M7COaYLeqN4DMuEin1wC9UJyH3yKxO2ii4
-# sanblrKnQqLJzxlBTeCG+SqaoxFmMNO7dDJL32N79ZmKLxvHIa9Zta7cRDyXUHHX
-# odLFVeNp3lfB0d4wwP3M5k37Db9dT+mdHhk4L7zPWAUu7w2gUDXa7wknHNWzfjUe
-# CLraNtvTX4/edIhJEqGCAs4wggI3AgEBMIH4oYHQpIHNMIHKMQswCQYDVQQGEwJV
-# UzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UE
-# ChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSUwIwYDVQQLExxNaWNyb3NvZnQgQW1l
-# cmljYSBPcGVyYXRpb25zMSYwJAYDVQQLEx1UaGFsZXMgVFNTIEVTTjpFNUE2LUUy
-# N0MtNTkyRTElMCMGA1UEAxMcTWljcm9zb2Z0IFRpbWUtU3RhbXAgU2VydmljZaIj
-# CgEBMAcGBSsOAwIaAxUAq6fBtEENocNASMqL03zGJS0wZd2ggYMwgYCkfjB8MQsw
-# CQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9u
-# ZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSYwJAYDVQQDEx1NaWNy
-# b3NvZnQgVGltZS1TdGFtcCBQQ0EgMjAxMDANBgkqhkiG9w0BAQUFAAIFAOVkOKsw
-# IhgPMjAyMTEyMTUxNzQ5MzFaGA8yMDIxMTIxNjE3NDkzMVowdzA9BgorBgEEAYRZ
-# CgQBMS8wLTAKAgUA5WQ4qwIBADAKAgEAAgIW2AIB/zAHAgEAAgIRYzAKAgUA5WWK
-# KwIBADA2BgorBgEEAYRZCgQCMSgwJjAMBgorBgEEAYRZCgMCoAowCAIBAAIDB6Eg
-# oQowCAIBAAIDAYagMA0GCSqGSIb3DQEBBQUAA4GBAE72pU5T68Zsjo1gnfvnAS1k
-# J6dgWu7c3gcApP2bJBowg3k43s2Ke2onen6cFM4qQBuDNrB4DkP8/99JqrxY/Vbo
-# BZGutDk68LEVb0iqP3dQIKCpRZs7HmoS0XeFDbKCw4gHP/DVxX7ymWWuv0+htoEs
-# msy8voQ4YMLPjth8v73iMYIDDTCCAwkCAQEwgZMwfDELMAkGA1UEBhMCVVMxEzAR
-# BgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1p
-# Y3Jvc29mdCBDb3Jwb3JhdGlvbjEmMCQGA1UEAxMdTWljcm9zb2Z0IFRpbWUtU3Rh
-# bXAgUENBIDIwMTACEzMAAAFHnY/x5t4xg1kAAAAAAUcwDQYJYIZIAWUDBAIBBQCg
-# ggFKMBoGCSqGSIb3DQEJAzENBgsqhkiG9w0BCRABBDAvBgkqhkiG9w0BCQQxIgQg
-# tJjpK/qCG4Nfr/0bcJu6Y7lr0Cda/C1NeGFHvUoxBC0wgfoGCyqGSIb3DQEJEAIv
-# MYHqMIHnMIHkMIG9BCB72zwSA5TPugbIiZO/2H1hrisAVItwzDscb0WqihjphTCB
-# mDCBgKR+MHwxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYD
-# VQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xJjAk
-# BgNVBAMTHU1pY3Jvc29mdCBUaW1lLVN0YW1wIFBDQSAyMDEwAhMzAAABR52P8ebe
-# MYNZAAAAAAFHMCIEIEBuv3P9DgTZtb5m3S45l70pi8PzgOikFM4Aw4VXgQUDMA0G
-# CSqGSIb3DQEBCwUABIIBAEGRdcL9dnfRNb0E5v3Y8IhvDV2CerF982aMtdqd6nO/
-# zlsiUzFU3NoxjTm0vU1fupeKvWu2F4kMeRcf6Gmxc1lVgkw/LGVQ7O3/NxB9ph91
-# rTZ2KJ0m/R0ATWHxDWerfCUxkrrY57WpO2PzQ0jXewKBIXBXhv6bmdBUVqm8nJ7G
-# nwOMp7gDb/TnzaWXiYaRNytqdK6ghhcZGBNxvL6kjQVEMaQNvFCOs+FX37FdCc+T
-# 89AE36W50NZZ55V6VP84VHjgQ60w5VDDh9MoHVTzjGi6Ijpg6fjtTyluSXO0EKbz
-# FkRjFHVahiV0NaJem+foc/CVwuzEsUuP0/IUjZrg4Tg=
-# SIG # End signature block
