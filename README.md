@@ -14,7 +14,7 @@ Download and run the `DSRegTool.ps1` script from [this](https://github.com/mzmai
 DSRegTool facilitates troubleshooting device registration issues for different join types
 
 ## What are tests DSRegTool perform?
-#### 1- Troubleshoot Azure AD Register
+#### 1- Troubleshoot Microsoft Entra Register
 - Testing OS version
 - Testing if the device is registered to AzureAD by the signed in user
 - Testing Device Registration endpoints connectivity
@@ -22,7 +22,7 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 - Testing if the device exists on AAD
 - Testing if the device is enabled on AAD 
 
-#### 2- Troubleshoot Azure AD Join device
+#### 2- Troubleshoot Microsoft Entra join device
 - Testing OS version
 - Testing if the device joined to the local domain
 - Testing if the device is joined to AzureAD
@@ -33,7 +33,7 @@ DSRegTool facilitates troubleshooting device registration issues for different j
 - Testing if the device exists on AAD.
 - Testing if the device is enabled on AAD 
 
-#### 3- Troubleshoot Hybrid Azure AD Join
+#### 3- Troubleshoot Microsoft Entra hybrid join
 - Testing OS version
 - Testing if the device joined to the local domain
 - Testing if the device is joined to AzureAD
