@@ -562,8 +562,8 @@ Function CheckPRT{
             $ADPRT = ($ADPRT.tostring() -split ":")[1].Trim()
             if ($ADPRT -eq 'YES'){
                 #PRT is available
-                Write-Host "Test passed: Primary Refresh Token (PRT) is available on this device for the looged on user" -ForegroundColor Green
-                Write-Log -Message "Test passed: Primary Refresh Token (PRT) is available on this device for the looged on user"
+                Write-Host "Test passed: Primary Refresh Token (PRT) is available on this device for the logged on user" -ForegroundColor Green
+                Write-Log -Message "Test passed: Primary Refresh Token (PRT) is available on this device for the logged on user"
                 CheckePRT
                 Write-Host ''
                 Write-Host ''
@@ -605,8 +605,8 @@ Function CheckPRT{
                 Write-Host ''
                 Write-Host "Testing Primary Refresh Token (PRT) registry value..." -ForegroundColor Yellow
                 if ((Get-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\https://login.microsoftonline.com -ErrorAction SilentlyContinue).PSPath){
-                    Write-Host "Test passed: Primary Refresh Token (PRT) registry value exists for the looged on user" -ForegroundColor Green
-                    Write-Log -Message "Test passed: Primary Refresh Token (PRT) registry value exists for the looged on user"
+                    Write-Host "Test passed: Primary Refresh Token (PRT) registry value exists for the logged on user" -ForegroundColor Green
+                    Write-Log -Message "Test passed: Primary Refresh Token (PRT) registry value exists for the logged on user"
                     Write-Host ''
                     Write-Host ''
                     Write-Host "Script completed successfully." -ForegroundColor Green
@@ -614,8 +614,8 @@ Function CheckPRT{
                     Write-Host ''
                     Write-Host ''
                     }else{
-                    Write-Host "Test failed: Primary Refresh Token (PRT) registry value does not exist for the looged on user" -ForegroundColor Red
-                    Write-Log -Message "Test failed: Primary Refresh Token (PRT) registry value does not exist for the looged on user" -Level ERROR
+                    Write-Host "Test failed: Primary Refresh Token (PRT) registry value does not exist for the logged on user" -ForegroundColor Red
+                    Write-Log -Message "Test failed: Primary Refresh Token (PRT) registry value does not exist for the logged on user" -Level ERROR
                     Write-Host ''
                     Write-Host "Recommended action: Disconnect the device from Microsoft Entra ID form 'settings > Accounts > Access work or school' and then connect it again to Microsoft Entra ID" -ForegroundColor Yellow
                     Write-Log -Message "Recommended action: Disconnect the device from Microsoft Entra ID form 'settings > Accounts > Access work or school' and then connect it again to Microsoft Entra ID"
@@ -666,8 +666,8 @@ Function CheckPRT{
             $ADPRT = ($ADPRT.tostring() -split ":")[1].Trim()
             if ($ADPRT -eq 'YES'){
                 #PRT is available
-                Write-Host "Test passed: Primary Refresh Token (PRT) is available on this device for the looged on user" -ForegroundColor Green
-                Write-Log -Message "Test passed: Primary Refresh Token (PRT) is available on this device for the looged on user" 
+                Write-Host "Test passed: Primary Refresh Token (PRT) is available on this device for the logged on user" -ForegroundColor Green
+                Write-Log -Message "Test passed: Primary Refresh Token (PRT) is available on this device for the logged on user" 
                 Write-Host ''
                 Write-Host ''
                 Write-Host "Script completed successfully." -ForegroundColor Green
@@ -709,16 +709,16 @@ Function CheckPRT{
                 Write-Host "Testing Primary Refresh Token (PRT) registry value..." -ForegroundColor Yellow
                 Write-Log -Message "Testing Primary Refresh Token (PRT) registry value..."
                 if ((Get-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\AAD\Storage\https://login.microsoftonline.com -ErrorAction SilentlyContinue).PSPath){
-                    Write-Host "Test passed: Primary Refresh Token (PRT) registry value exists for the looged on user" -ForegroundColor Green
-                    Write-Log -Message "Test passed: Primary Refresh Token (PRT) registry value exists for the looged on user"
+                    Write-Host "Test passed: Primary Refresh Token (PRT) registry value exists for the logged on user" -ForegroundColor Green
+                    Write-Log -Message "Test passed: Primary Refresh Token (PRT) registry value exists for the logged on user"
                     Write-Host ''
                     Write-Host ''
                     Write-Host "Script completed successfully." -ForegroundColor Green
                     Write-Log -Message "Script completed successfully."
                     Write-Host ''
                 }else{
-                    Write-Host "Test failed: Primary Refresh Token (PRT) registry value does not exist for the looged on user" -ForegroundColor Red
-                    Write-Log -Message "Test failed: Primary Refresh Token (PRT) registry value does not exist for the looged on user" -Level ERROR
+                    Write-Host "Test failed: Primary Refresh Token (PRT) registry value does not exist for the logged on user" -ForegroundColor Red
+                    Write-Log -Message "Test failed: Primary Refresh Token (PRT) registry value does not exist for the logged on user" -Level ERROR
                     Write-Host ''
                     Write-Host "Recommended action: Disconnect the device from Microsoft Entra ID form 'settings > Accounts > Access work or school' and then connect it again to Microsoft Entra ID" -ForegroundColor Yellow
                     Write-Log -Message "Recommended action: Disconnect the device from Microsoft Entra ID form 'settings > Accounts > Access work or school' and then connect it again to Microsoft Entra ID"
@@ -1608,7 +1608,7 @@ Function LogsCollection{
     'regedit /e LAPS_Legacy.txt HKEY_LOCAL_MACHINE\Software\Policies\Microsoft Services\AdmPwd'
 
     $global:AADExt='set > set.txt',`
-    'sc query  > services-config.txt',`    'md AADExtention',`    'curl https://login.microsoftonline.com/ -D - > .\AADExtention\login.microsoftonline.com.txt 2>&0',`    'curl https://enterpriseregistration.windows.net/ -D - > .\AADExtention\enterpriseregistration.windows.net.txt 2>&0',`    'curl https://device.login.microsoftonline.com/ -D - > .\AADExtention\device.login.microsoftonline.com.txt 2>&0',`    'curl https://pas.windows.net/ -D - > .\AADExtention\pas.windows.net.txt 2>&0',`    'xcopy C:\WindowsAzure\Logs\Plugins\Microsoft.Azure.ActiveDirectory.AADLoginForWindows .\AADExtention\Microsoft.Azure.ActiveDirectory.AADLoginForWindows /E /H /C /I 2>&0 > null'
+    'sc query  > services-config.txt',`    'md AADExtention',`    'curl https://login.microsoftonline.com/ -D - > .\AADExtention\login.microsoftonline.com.txt 2>&0',`    'curl https://enterpriseregistration.windows.net/ -D - > .\AADExtention\enterpriseregistration.windows.net.txt 2>&0',`    'curl https://device.login.microsoftonline.com/ -D - > .\AADExtention\device.login.microsoftonline.com.txt 2>&0',`    'curl https://pas.windows.net/ -D - > .\AADExtention\pas.windows.net.txt 2>&0',`    'xcopy C:\WindowsAzure\Logs\Plugins\Microsoft.Azure.ActiveDirectory.AADLoginForWindows .\AADExtention\Microsoft.Azure.ActiveDirectory.AADLoginForWindows /E /H /C /I >null 2>&1'
     If ((((New-Object System.Diagnostics.Eventing.Reader.EventlogConfiguration "Microsoft-Windows-AAD/Analytic").IsEnabled) -and ((New-Object System.Diagnostics.Eventing.Reader.EventlogConfiguration "Microsoft-Windows-User Device Registration/Debug").IsEnabled))){        write-Host "Debug logs are enabled, it seems you started log collection" -ForegroundColor Yellow        Write-Log -Message "Debug logs are enabled, it seems you started log collection" -logfile "$global:LogsPath\Log.log"        write-Host "Do you want to continue with current log collection? [Y/N]" -ForegroundColor Yellow        Write-Log -Message "Do you want to continue with current log collection? [Y/N]" -logfile "$global:LogsPath\Log.log"        $input=Read-Host "Enter 'Y' to continue, or 'N' to start a new log collection"        While(($input -ne 'y') -AND ($input -ne 'n')){
             $input = Read-Host -Prompt "Invalid input. Please make a correct selection from the above options, and press Enter" 
         }        if($input -eq 'y'){            Write-Log -Message "Continue option has selected" -logfile "$global:LogsPath\Log.log"            #Test if DSRegToolLog folder exist            if(Test-Path $global:LogsPath){                #Stop log collection, when repro finished, please press ENTER.                StopLogCollection            }else{                Write-Host ''                Write-Host "Please locate DSRegToolLog folder/path where you start the tool previously, and start the tool again" -ForegroundColor Red                write-log -Message "Please locate DSRegToolLog folder/path where you start the tool previously, and start the tool again" -Level ERROR            }        }elseif($input -eq 'n'){            Write-Log -Message "Start new collection option has selected" -logfile "$global:LogsPath\Log.log"            #Start log collection from bigning            StartLogCollection            StopLogCollection        }    }else{        #Start log collection from bigning        StartLogCollection        StopLogCollection    }
