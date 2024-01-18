@@ -2721,7 +2721,6 @@ Function DJ++TS{
         Write-Host ''
         Write-Host "Testing Automatic-Device-Join task scheduler..." -ForegroundColor Yellow
         Write-Log -Message "Testing Automatic-Device-Join task scheduler..."
-        $TaskState=(Get-ScheduledTask -TaskName Automatic-Device-Join).State
         $TaskState=((schtasks.exe /query /tn "\Microsoft\Windows\Workplace Join\Automatic-Device-Join")[4].Trim() -split " ")[-1]
         if (($TaskState -ne 'Ready') -and ($TaskState -ne 'Bereit')){
             Write-Host "Test failed: Automatic-Device-Join task scheduler is not ready" -ForegroundColor Red
